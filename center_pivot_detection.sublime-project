@@ -1,0 +1,15 @@
+{
+    "folders":
+    [
+        {
+            "name": "Center Pivot Detection",
+            "path": ".",
+            "folder_exclude_patterns": [
+                "data", "__pycache__"
+            ],
+            "file_exclude_patterns": [
+                "*.pyc"
+            ]
+        }
+    ]
+}
