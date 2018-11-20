@@ -1,6 +1,6 @@
-from .landsat import SingleSceneDataset
+from .landsat import SingleScene
 
 
 __all__ = (
-    'SingleSceneDataset',
+    'SingleScene',
 )

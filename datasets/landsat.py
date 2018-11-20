@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 
-class SingleSceneDataset(Dataset):
+class SingleScene(Dataset):
     """This Dataset loads subsets of a single scene."""
 
     def __init__(self, root='data', size=128, stride=64,
@@ -43,6 +43,7 @@ class SingleSceneDataset(Dataset):
         # Load the segmentation
         filename = glob.glob(os.path.join(root, 'pivots_*_clipped.tif'))[0]
         ds = gdal.Open(filename)
+        self.dataset = ds
         self.segmentation = ds.ReadAsArray()
 
     def __len__(self):
@@ -62,6 +63,8 @@ class SingleSceneDataset(Dataset):
         Returns:
             numpy.ndarray: a 3D tensor of raw satellite imagery
             numpy.ndarray: the correct segmentation of the image
+            int: the starting row the subset was extracted from
+            int: the starting col the subset was extracted from
         """
         # Border often contains invalid pixels.
         # Center the subsets within the scene.
@@ -86,7 +89,7 @@ class SingleSceneDataset(Dataset):
         if self.target_transform:
             target = self.target_transform(target)
 
-        return data, target
+        return data, target, y, x
 
     @property
     def height(self):
@@ -105,3 +108,21 @@ class SingleSceneDataset(Dataset):
             int: the number of subsets wide the scene is
         """
         return (self.scene.shape[2] - self.size) // self.size + 1
+
+    def write(self, predictions, filename):
+        """Write a set of predictions to a GeoTIFF file.
+
+        Parameters:
+            predictions (list): a list of (prediction, y, x) tuples
+            filename (str): the output filename
+        """
+        driver = self.dataset.GetDriver()
+        dst_ds = driver.CreateCopy(filename, self.dataset)
+
+        prediction_array = np.zeros_like(self.segmentation)
+        for prediction, y, x in predictions:
+            prediction_array[y:y + self.size, x:x + self.size] = prediction
+
+        # Overwrite the raster band with the predicted labels
+        band = dst_ds.GetRasterBand(1)
+        band.WriteArray(prediction_array)
