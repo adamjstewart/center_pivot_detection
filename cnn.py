@@ -28,7 +28,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data.sampler as samplers
+
 from datasets import landsat
+from transforms import transforms as custom_transforms
+import torchvision
+
 from scipy import misc
 import imageio
 import utils
@@ -165,7 +169,6 @@ def test(args, model, test_loader, prefix=''):
         if args.cuda:
             data = data.cuda()
             target = target.cuda()
-        data = data.float()
         target = (target > 0).float()
         yhat = model(data)
         ### Compute
@@ -222,7 +225,36 @@ for dir_name in directories_needed:
 ##########
 
 # dataset stuff
-dataset = landsat.SingleScene(root=args.data_dir, size=256)
+
+baby_data_normalization_transform = torchvision.transforms.Normalize(
+    mean=[
+        519.2332344309812,
+        800.9046442974101,
+        789.4069866067395,
+        3089.939039506722,
+        2606.206511476599,
+        1661.5216229707723
+    ],
+    std=[
+        1110.5749716985256,
+        1140.5262261747455,
+        1164.0975479971798,
+        1445.48526409245,
+        1469.7028140666473,
+        1396.344680066366
+    ]
+)
+baby_data_transform = torchvision.transforms.Compose([
+    custom_transforms.ToTensor(),
+    baby_data_normalization_transform,
+])
+
+dataset = landsat.SingleScene(
+    root=args.data_dir,
+    size=256,
+    transform=baby_data_transform
+)
+
 train_loader, test_loader = utils.binary_splitter(dataset, args.split)
 
 model = architectures[args.arch](args)
@@ -240,10 +272,10 @@ for epoch in range(args.n_epochs):
             data = data.cuda()
             target = target.cuda()
 
-        data = data.float()
         target = (target > 0).float()
-
         pred = model(data)
+
+
         batch_acc = ((pred.detach() > 0) == (target > 0)).float().mean().item()
         accs.append(batch_acc)
 

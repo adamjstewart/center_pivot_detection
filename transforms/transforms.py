@@ -9,7 +9,7 @@ class ToTensor:
     """Convert a ``numpy.ndarray`` to tensor."""
 
     def __call__(self, pic):
-        return torch.from_numpy(pic)
+        return torch.from_numpy(pic).float()
 
 
 class RandomHorizontalFlip:
