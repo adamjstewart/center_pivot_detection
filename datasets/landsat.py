@@ -36,7 +36,7 @@ class SingleScene(Dataset):
             filename = '*_sr_band{}_clipped.tif'.format(band)
             filename = glob.glob(os.path.join(root, filename))[0]
             ds = gdal.Open(filename)
-            ar = ds.ReadAsArray()
+            ar = ds.ReadAsArray().astype(float)
             scene.append(ar)
         self.scene = np.array(scene)
 
@@ -44,7 +44,7 @@ class SingleScene(Dataset):
         filename = glob.glob(os.path.join(root, 'pivots_*_clipped.tif'))[0]
         ds = gdal.Open(filename)
         self.dataset = ds
-        self.segmentation = ds.ReadAsArray()
+        self.segmentation = ds.ReadAsArray().astype(float)
 
     def __len__(self):
         """The size of the Dataset.
