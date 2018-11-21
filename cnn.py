@@ -186,10 +186,11 @@ parser.add_argument("--model_dir", dest="model_dir", type=str, default="models",
 parser.add_argument("--image_dir", dest="image_dir", type=str, default="images", help="Subdirectory to save images")  # noqa
 
 # misc
+parser.add_argument("--split", dest="split", type=float, metavar='<float>', default=0.9, help='Train/test split')  # noqa
 parser.add_argument("--seed", dest="seed", type=int, metavar='<int>', default=1337, help="Random seed (default=1337)")  # noqa
 parser.add_argument("--cuda", dest="cuda", default=False, action="store_true")  # noqa
 parser.add_argument("--debug", default=False, action="store_true", help="Debug mode")
-parser.add_argument("--e", dest="n_epochs", default=100, type=int, help="Number of epochs")
+parser.add_argument("--e", dest="n_epochs", default=10, type=int, help="Number of epochs")
 parser.add_argument("--lr", dest="lr", type=float, metavar='<float>', default=0.001, help='Learning rate')  # noqa
 parser.add_argument("--weight_decay", dest="weight_decay", type=float, metavar='<float>', default=1e-5, help='Weight decay')  # noqa
 parser.add_argument("--arch", dest="arch", type=str, metavar='<float>', choices=architectures.keys(), default='randn', help='Architecture')  # noqa
@@ -222,7 +223,7 @@ for dir_name in directories_needed:
 
 # dataset stuff
 dataset = landsat.SingleScene(root=args.data_dir, size=256)
-train_loader, test_loader = utils.binary_splitter(dataset, 1.0)
+train_loader, test_loader = utils.binary_splitter(dataset, args.split)
 
 model = architectures[args.arch](args)
 if args.cuda:
@@ -241,7 +242,6 @@ for epoch in range(args.n_epochs):
 
         data = data.float()
         target = (target > 0).float()
-        pdb.set_trace()
 
         pred = model(data)
         batch_acc = ((pred.detach() > 0) == (target > 0)).float().mean().item()
