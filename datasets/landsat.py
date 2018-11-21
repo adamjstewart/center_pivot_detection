@@ -79,8 +79,8 @@ class SingleScene(Dataset):
         y = row * self.size + y_offset
         x = col * self.size + x_offset
 
-        data = self.scene[:, y:y + self.size, x:x + self.size]
-        target = self.segmentation[y:y + self.size, x:x + self.size]
+        data = self.scene[:, y: y + self.size, x: x + self.size]
+        target = self.segmentation[y: y + self.size, x: x + self.size]
 
         # Apply any requested transforms
         if self.transform:
