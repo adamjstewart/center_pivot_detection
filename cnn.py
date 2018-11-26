@@ -58,7 +58,6 @@ class UNet(nn.Module):
             nn.Conv2d(64, 64, 3, 1, 1),  # 64, 256, 256
             nn.LeakyReLU(),
             nn.Conv2d(64, 1, 3, 1, 1),  # 1, 256, 256
-            nn.Sigmoid(),
         )
         self.maxunpool0 = nn.MaxUnpool2d(2)
 
@@ -139,23 +138,34 @@ class UNet(nn.Module):
         y1 = self.deconv1(torch.cat([x2, y1p5], dim=1))
         y0p5 = self.maxunpool0(y1, ind0)
         y0 = self.deconv0(torch.cat([x1, y0p5], dim=1))
-        return y0.view(x.shape[0], x.shape[1], x.shape[2])
+        return torch.sigmoid(y0.view(x.shape[0], x.shape[1], x.shape[2]))
 
 
 class Gauss(nn.Module):
     def __init__(self, args):
         super(Gauss, self).__init__()
         self.args = args
-        self.sigma = nn.Parameter(torch.rand((1, ), dtype=torch.float))
+        self.sigma = nn.Parameter(torch.randn((1, ), dtype=torch.float))
         self.mu = nn.Parameter(torch.randn((1, ), dtype=torch.float))
 
     def forward(self, x):
         return torch.sigmoid(self.mu + self.sigma * torch.randn_like(x, dtype=torch.float, device='cuda' if args.cuda else 'cpu')).mean(dim=1)
 
 
+class Constant(nn.Module):
+    def __init__(self, args):
+        super(Constant, self).__init__()
+        self.args = args
+        self.constant = nn.Parameter(0.1 * torch.randn(1, dtype=torch.float))
+
+    def forward(self, x):
+        return torch.sigmoid(self.constant * torch.ones((x.shape[0], x.shape[2], x.shape[3]), dtype=torch.float, device='cuda' if self.args.cuda else 'cpu'))
+
+
 architectures = {
     'randn': Gauss,
     'unet': UNet,
+    'const': Constant
 }
 ##########
 ### Test
@@ -172,7 +182,7 @@ def test(args, model, test_loader, prefix=''):
         target = (target > 0).float()
         yhat = model(data)
         ### Compute
-        batch_acc = ((yhat.detach() > 0) == (target > 0)).float().mean().item()
+        batch_acc = ((yhat.detach() > 0.5) == (target > 0)).float().mean().item()
         # print("acc[{}]={}".format(batch_idx, batch_acc))
         acc.append(batch_acc)
     print('{} net accuracy: {}'.format(prefix, np.mean(acc)))
@@ -266,6 +276,7 @@ adam = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay
 for epoch in range(args.n_epochs):
     losses = []
     accs = []
+    # plusses = []
     for bidx, (data, target, y, x) in enumerate(train_loader):
         bs = x.shape[0]
         if args.cuda:
@@ -275,9 +286,10 @@ for epoch in range(args.n_epochs):
         target = (target > 0).float()
         pred = model(data)
 
+        batch_acc = ((pred.detach() > 0.5) == (target > 0)).float().mean().item()
 
-        batch_acc = ((pred.detach() > 0) == (target > 0)).float().mean().item()
         accs.append(batch_acc)
+        # plusses.append((target > 0).float().mean().item())
 
         loss = F.binary_cross_entropy(pred.view(bs, -1), target.view(bs, -1))
         losses.append(loss.item())
@@ -286,6 +298,7 @@ for epoch in range(args.n_epochs):
         adam.step()
     print("loss[{}]={}".format(epoch, np.mean(losses)))
     print("acc[{}]={}".format(epoch, np.mean(accs)))
+    # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
 
 test(args, model, train_loader, prefix='train')
 
