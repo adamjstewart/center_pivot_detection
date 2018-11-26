@@ -38,6 +38,23 @@ import imageio
 import utils
 
 # TODO: Write up CNN architecture.
+class SmolUNet(nn.Module):
+    def __init__(self, args, in_channels=6):
+        super(SmolUNet, self).__init__()
+        self.args = args
+        self.net = nn.Sequential(
+            nn.Conv2d(in_channels, 16, 3, 1, 1),  # 16, 256, 256
+            nn.LeakyReLU(negative_slope=0.2),
+            nn.Conv2d(16, 32, 3, 1, 1),  # 32, 256, 256
+            nn.LeakyReLU(negative_slope=0.2),
+            nn.Conv2d(32, 16, 3, 1, 1),  # 16, 256, 256
+            nn.LeakyReLU(negative_slope=0.2),
+            nn.Conv2d(16, 1, 3, 1, 1),  # 16, 256, 256
+        )
+    def forward(self, x):
+        return torch.sigmoid(self.net(x).view(x.shape[0], x.shape[2], x.shape[3]))
+
+
 class UNet(nn.Module):
     def __init__(self, args, in_channels=6):
         super(UNet, self).__init__()
@@ -138,7 +155,7 @@ class UNet(nn.Module):
         y1 = self.deconv1(torch.cat([x2, y1p5], dim=1))
         y0p5 = self.maxunpool0(y1, ind0)
         y0 = self.deconv0(torch.cat([x1, y0p5], dim=1))
-        return torch.sigmoid(y0.view(x.shape[0], x.shape[1], x.shape[2]))
+        return torch.sigmoid(y0.view(x.shape[0], x.shape[2], x.shape[3]))
 
 
 class Gauss(nn.Module):
@@ -165,7 +182,8 @@ class Constant(nn.Module):
 architectures = {
     'randn': Gauss,
     'unet': UNet,
-    'const': Constant
+    'const': Constant,
+    'smol': SmolUNet,
 }
 ##########
 ### Test
@@ -204,7 +222,7 @@ parser.add_argument("--seed", dest="seed", type=int, metavar='<int>', default=13
 parser.add_argument("--cuda", dest="cuda", default=False, action="store_true")  # noqa
 parser.add_argument("--debug", default=False, action="store_true", help="Debug mode")
 parser.add_argument("--e", dest="n_epochs", default=10, type=int, help="Number of epochs")
-parser.add_argument("--lr", dest="lr", type=float, metavar='<float>', default=0.001, help='Learning rate')  # noqa
+parser.add_argument("--lr", dest="lr", type=float, metavar='<float>', default=0.01, help='Learning rate')  # noqa
 parser.add_argument("--weight_decay", dest="weight_decay", type=float, metavar='<float>', default=1e-5, help='Weight decay')  # noqa
 parser.add_argument("--arch", dest="arch", type=str, metavar='<float>', choices=architectures.keys(), default='randn', help='Architecture')  # noqa
 args = parser.parse_args()
@@ -300,7 +318,8 @@ for epoch in range(args.n_epochs):
     print("acc[{}]={}".format(epoch, np.mean(accs)))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
 
-test(args, model, train_loader, prefix='train')
+test(args, model, train_loader, prefix='train ')
+test(args, model, test_loader, prefix='test ')
 
 ##########
 ### Le end
