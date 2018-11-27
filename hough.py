@@ -1,3 +1,16 @@
+"""
+accuracy[0.1][8, 64, 64]:0.14253463745117187
+accuracy[0.25][8, 64, 64]:0.1426849365234375
+accuracy[0.5][8, 64, 64]:0.3911308288574219
+accuracy[0.5][8, 64, 64]:0.3911308288574219
+accuracy[0.5625][8, 64, 64]:0.7589462280273438
+accuracy[0.625][8, 64, 64]:0.8495597839355469
+accuracy[0.6875][8, 64, 64]:0.8568084716796875
+accuracy[0.75][8, 64, 64]:0.8574653625488281
+accuracy[0.9][8, 64, 64]:0.8574653625488281
+
+
+"""
 import os
 import pdb
 import numpy as np
@@ -18,29 +31,34 @@ args = parser.parse_args()
 
 dataset = landsat.SingleScene(root=args.data_dir, size=256)
 
-for (min_r, max_r, nr) in [(10, 32, 10)]:
-    for threshold in [0.5]:
-        print("min_r:{}, max_r:{}, nr:{}, threshold:{}".format(min_r, max_r, nr, threshold))
-        # Hough transforms don't have any trainable parameters. We will simply do a hyperparam search
-        hough_radii = np.arange(min_r, max_r, nr)
-        threshold = 0.1
+for (min_r, max_r, nr) in [(8, 64, 64)]:
+    thresholds = list(np.linspace(0.1, 0.9, 20))
+    print("min_r:{}, max_r:{}, nr:{}, thresholds:{}".format(min_r, max_r, nr, thresholds))
+    # Hough transforms don't have any trainable parameters. We will simply do a hyperparam search
+    hough_radii = np.arange(min_r, max_r, nr)
 
-        accuracies = np.zeros(len(dataset), dtype=np.float)
-        for i in range(len(dataset)):  # Over datapoints
-            data, target, y, x = dataset[i]
-            target = target > 0
+    accuracies = {thr: np.zeros(len(dataset), dtype=np.float) for thr in thresholds}
+    for i in range(len(dataset)):  # Over datapoints
+        data, target, y, x = dataset[i]
+        target = target > 0
 
-            pred = np.zeros(data.shape, dtype=bool)
+        pred = {thr: np.zeros(data.shape, dtype=bool) for thr in thresholds}
 
-            for cidx in range(data.shape[0]):  # Over channels
-                edges = canny(data[cidx, :, :])
-                hough_res = hough_circle(edges, hough_radii)
-                accums, cxs, cys, radii = hough_circle_peaks(hough_res, hough_radii, threshold=threshold)
+        for cidx in range(data.shape[0]):  # Over channels
+            edges = canny(data[cidx, :, :])
+            hough_res = hough_circle(edges, hough_radii)
+            for thr in thresholds:
+                accums, cxs, cys, radii = hough_circle_peaks(hough_res, hough_radii, threshold=thr)
                 for cx, cy, r in zip(cxs, cys, radii):
-                    circx, circy = circle(cx, cy, r, shape=(pred.shape[1], pred.shape[2]))
-                    pred[cidx, circx, circy] = True
+                    circx, circy = circle(cx, cy, r, shape=(pred[thr].shape[1], pred[thr].shape[2]))
+                    pred[thr][cidx, circx, circy] = True
 
-            # Compute accuracy
-            accuracies[i] = np.mean(target == (pred.max(axis=0)))  # Simple max pool over channels
-
-        print("accuracy[{}, {}, {}, {}]:{}".format(min_r, max_r, nr, threshold, np.mean(accuracies)))
+        # Compute accuracy
+        for thr in thresholds:
+            accuracies[thr][i] = np.mean(target == (pred[thr].max(axis=0)))  # Simple max pool over channels
+    best_thr = None
+    for thr in thresholds:
+        if ((best_thr is None) or (np.mean(accuracies[thr]) > np.mean(accuracies[best_thr]))):
+            best_thr = thr
+        print("accuracy[{}][{}, {}, {}]:{}".format(thr, min_r, max_r, nr, np.mean(accuracies[thr])))
+    print("best: accuracy[{}][{}, {}, {}]:{}".format(best_thr, min_r, max_r, nr, np.mean(accuracies[best_thr])))

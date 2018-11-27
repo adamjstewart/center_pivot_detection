@@ -10,7 +10,7 @@ import torch
 from torch.utils.data import SubsetRandomSampler
 from collections import defaultdict
 
-def binary_splitter(dataset, frac, shuffle=True, batch_size=32, debug=False, selected_indices=None, confounder_group_size=None):
+def binary_splitter(dataset, frac, shuffle=True, batch_size=32, debug=False, num_workers=4, selected_indices=None, confounder_group_size=None):
     dataset_size = len(dataset)
     if debug:
         dataset_size = 100
@@ -37,6 +37,6 @@ def binary_splitter(dataset, frac, shuffle=True, batch_size=32, debug=False, sel
 
     train_sampler = SubsetRandomSampler(train_indices)
     test_sampler = SubsetRandomSampler(test_indices)
-    train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, sampler=train_sampler)
-    test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, sampler=test_sampler)
+    train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, sampler=train_sampler, num_workers=num_workers)
+    test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, sampler=test_sampler, num_workers=num_workers)
     return train_loader, test_loader
