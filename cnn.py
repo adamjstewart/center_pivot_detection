@@ -199,6 +199,7 @@ for epoch in range(args.n_epochs):
 
 test(args, model, train_loader, prefix='train ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
 test(args, model, test_loader, prefix='test ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))
+test(args, model, itertools.chain(train_loader, test_loader), prefix='all ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'all_predictions.tif'))
 
 ##########
 ### Le end
