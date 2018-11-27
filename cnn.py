@@ -56,11 +56,13 @@ architectures = {
 ##########
 ### Test
 ##########
-def test(args, model, test_loader, prefix=''):
+def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
     model.eval()
     acc = []
     if args.cuda:
         model = model.cuda()
+    if vis_file != '':
+        predictions = []
     for batch_idx, (data, target, y, x) in enumerate(test_loader):
         if args.cuda:
             data = data.cuda()
@@ -71,8 +73,13 @@ def test(args, model, test_loader, prefix=''):
         batch_acc = ((yhat.detach() > 0.5) == (target > 0)).float().mean().item()
         # print("acc[{}]={}".format(batch_idx, batch_acc))
         acc.append(batch_acc)
-    print('{} net accuracy: {}'.format(prefix, np.mean(acc)))
+        if vis_file != '':
+            predictions.extend([(yhat[idx, :, :].detach().cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
 
+    print('{} net accuracy: {}'.format(prefix, np.mean(acc)))
+    if vis_file != '':
+        assert(dataset is not None)
+        dataset.write(predictions, vis_file)
 
 ##########
 ### argparse
@@ -90,6 +97,7 @@ parser.add_argument("--seed", dest="seed", type=int, metavar='<int>', default=13
 parser.add_argument("--cuda", dest="cuda", default=False, action="store_true")  # noqa
 parser.add_argument("--debug", default=False, action="store_true", help="Debug mode")
 parser.add_argument("--b", dest="batch_size", default=32, type=int, help="Batch size")
+parser.add_argument("--v", dest="val_rate", default=8, type=int, help="Validation rate")
 parser.add_argument("--e", dest="n_epochs", default=1000, type=int, help="Number of epochs")
 parser.add_argument("--lr", dest="lr", type=float, metavar='<float>', default=0.001, help='Learning rate')  # noqa
 parser.add_argument("--weight_decay", dest="weight_decay", type=float, metavar='<float>', default=1e-5, help='Weight decay')  # noqa
@@ -186,11 +194,14 @@ for epoch in range(args.n_epochs):
     print("loss[{}]={}".format(epoch, np.mean(losses)))
     print("acc[{}]={}".format(epoch, np.mean(accs)))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
+    if epoch % args.val_rate == 0:
+        test(args, model, test_loader, prefix='val ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'val_predictions.tif'))
 
-test(args, model, train_loader, prefix='train ')
-test(args, model, test_loader, prefix='test ')
+test(args, model, train_loader, prefix='train ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'train_predictions.tif'))
+test(args, model, test_loader, prefix='test ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'test_predictions.tif'))
 
 ##########
 ### Le end
 ##########
+
 print("Used run_code: {}".format(args.run_code))
