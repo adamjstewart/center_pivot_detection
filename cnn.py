@@ -116,8 +116,8 @@ if len(args.run_code) == 0:
     args.run_code = 'run{}'.format(run_count)
 print("Using run_code: {}".format(args.run_code))
 # If directory doesn't exist, create it
-args.model_dir = os.path.join(args.base_output, args.run_code, args.model_dir)  # noqa
-args.image_dir = os.path.join(args.base_output, args.run_code, args.image_dir)  # noqa
+args.model_dir = os.path.join(args.data_dir, args.run_code, args.model_dir)  # noqa
+args.image_dir = os.path.join(args.data_dir, args.run_code)  # noqa
 
 directories_needed = [args.model_dir, args.image_dir]
 
@@ -195,10 +195,10 @@ for epoch in range(args.n_epochs):
     print("acc[{}]={}".format(epoch, np.mean(accs)))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
     if epoch % args.val_rate == 0:
-        test(args, model, test_loader, prefix='val ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'val_predictions.tif'))
+        test(args, model, test_loader, prefix='val ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
 
-test(args, model, train_loader, prefix='train ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'train_predictions.tif'))
-test(args, model, test_loader, prefix='test ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'test_predictions.tif'))
+test(args, model, train_loader, prefix='train ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
+test(args, model, test_loader, prefix='test ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))
 
 ##########
 ### Le end
