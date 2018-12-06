@@ -74,7 +74,7 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
         # print("acc[{}]={}".format(batch_idx, batch_acc))
         acc.append(batch_acc)
         if vis_file != '':
-            predictions.extend([(yhat[idx, :, :].detach().cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
+            predictions.extend([((yhat[idx, :, :].detach() > 0.5).cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
 
     print('{} net accuracy: {}'.format(prefix, np.mean(acc)))
     if vis_file != '':
