@@ -22,13 +22,69 @@ import torch.optim as optim
 import torch.utils.data.sampler as samplers
 
 
-class UNet(nn.Module):
+
+class UNet_add(nn.Module):
     def __init__(self, args, in_channels=6):
-        super(UNet, self).__init__()
+        super(UNet_add, self).__init__()
         self.args = args
 
         # c,256x256 -> 256x256
+        # Level 0
+        self.conv0 = nn.Sequential(
+            nn.Conv2d(in_channels, 8, 3, 1, 1),  # 8, 256, 256
+            nn.LeakyReLU(),
+        )
+        self.maxpool0 = nn.MaxPool2d(2, return_indices=True)  # 8, 128, 128
+        self.deconv0 = nn.Sequential(
+            nn.Conv2d(8, 8, 3, 1, 1),  # 8, 256, 256
+            nn.LeakyReLU(),
+            nn.Conv2d(8, 1, 3, 1, 1),  # 1, 256, 256
+        )
+        self.maxunpool0 = nn.MaxUnpool2d(2)
 
+        # Level 1
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(8, 16, 3, 1, 1),  # 16, 128, 128
+            nn.LeakyReLU(),
+        )
+        self.deconv1 = nn.Sequential(
+            nn.Conv2d(16, 8, 3, 1, 1),  # 16, 128, 128
+            nn.LeakyReLU(),
+            # nn.Conv2d(16, 16, 3, 1, 1),  # 16, 128, 128
+            # nn.LeakyReLU(),
+        )
+        self.maxpool1 = nn.MaxPool2d(2, return_indices=True)
+        self.maxunpool1 = nn.MaxUnpool2d(2)
+
+        # Level 2
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(16, 32, 3, 1, 1),  # 32, 64, 64
+            nn.LeakyReLU(),
+            nn.Conv2d(32, 16, 3, 1, 1),  # 64, 64, 64
+            nn.LeakyReLU(),
+        )
+
+    def forward(self, x):
+        # x: bs, nbands, 256, 256
+        x0 = x
+        x1 = self.conv0(x0)
+        x1p5, ind0 = self.maxpool0(x1)
+        x2 = self.conv1(x1p5)
+        x2p5, ind1 = self.maxpool1(x2)
+        x3 = self.conv2(x2p5)
+        y1p5 = self.maxunpool1(x3, ind1)  # 128, 128
+        y1 = self.deconv1(x2 + y1p5)
+        y0p5 = self.maxunpool0(y1, ind0)
+        y0 = self.deconv0(x1 + y0p5)
+        return torch.sigmoid(y0.view(x.shape[0], x.shape[2], x.shape[3]))
+
+
+class UNet_cat(nn.Module):
+    def __init__(self, args, in_channels=6):
+        super(UNet_cat, self).__init__()
+        self.args = args
+
+        # c,256x256 -> 256x256
         # Level 0
         self.conv0 = nn.Sequential(
             nn.Conv2d(in_channels, 8, 3, 1, 1),  # 8, 256, 256

@@ -35,6 +35,7 @@ from transforms import transforms as custom_transforms
 import torchvision
 
 from scipy import misc
+from sklearn import metrics
 import imageio
 import utils
 
@@ -42,20 +43,34 @@ import utils
 from modules.smolnet import SmolNet
 from modules.dumb import Gauss, Constant
 from modules.unet import (
-    UNet,
+    UNet_cat,
+    UNet_add,
     UNet_too_big,
 )
-
+from modules.cnn_ts import (
+    CNNTS2D_cat,
+    CNNTS3D_cat,
+    CNNTS2D_add,
+    CNNTS3D_add,
+)
 
 architectures = {
     'randn': Gauss,
-    'unet': UNet,
+    'unet_cat': UNet_cat,
+    'unet_add': UNet_add,
     'const': Constant,
     'smol': SmolNet,
+    'l32d_cat': CNNTS2D_cat,  # Need better names!
+    'l33d_cat': CNNTS3D_cat,  # Need better names!
+    'l32d_add': CNNTS2D_add,  # Need better names!
+    'l33d_add': CNNTS3D_add,  # Need better names!
 }
+
+
 ##########
 ### Test
 ##########
+
 def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
     model.eval()
     acc = []
@@ -63,6 +78,8 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
         model = model.cuda()
     if vis_file != '':
         predictions = []
+
+    conf_mat = None
     for batch_idx, (data, target, y, x) in enumerate(test_loader):
         if args.cuda:
             data = data.cuda()
@@ -70,13 +87,25 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
         target = (target > 0).float()
         yhat = model(data)
         ### Compute
-        batch_acc = ((yhat.detach() > 0.5) == (target > 0)).float().mean().item()
-        # print("acc[{}]={}".format(batch_idx, batch_acc))
-        acc.append(batch_acc)
+
+        batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().numpy(), (yhat.detach() > 0.5).cpu().numpy())
+        if conf_mat is None:
+            conf_mat = batch_conf_mat
+        else:
+            conf_mat += batch_conf_mat
+
+
         if vis_file != '':
             predictions.extend([((yhat[idx, :, :].detach() > 0.5).cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
 
-    print('{} net accuracy: {}'.format(prefix, np.mean(acc)))
+    print('{} net conf_matrix: {}'.format(prefix, conf_mat))
+    acc, prec, rec = (conf_mat[0, 0] + conf_mat[1, 1]) / np.sum(conf_mat), conf_mat[0, 0] / (conf_mat[0, 0] + conf_mat[0, 1]), conf_mat[0, 0] / (conf_mat[0, 0] + conf_mat[1, 0])
+    f1 = 2 * prec * rec / (prec + rec)
+    print('{} net accuracy: {}'.format(prefix, acc))
+    print('{} net precision: {}'.format(prefix, prec))
+    print('{} net recall: {}'.format(prefix, rec))
+    print('{} net f1: {}'.format(prefix, f1))
+
     if vis_file != '':
         assert(dataset is not None)
         dataset.write(predictions, vis_file)
@@ -90,6 +119,7 @@ parser.add_argument("--base_output", dest="base_output", default="outputs/", hel
 parser.add_argument("--run", dest='run_code', type=str, default='', help='Name this run. It will be part of file names for convenience')  # noqa
 parser.add_argument("--model_dir", dest="model_dir", type=str, default="models", help="Subdirectory to save models")  # noqa
 parser.add_argument("--image_dir", dest="image_dir", type=str, default="images", help="Subdirectory to save images")  # noqa
+parser.add_argument("-chk", "--checkpoint", dest='checkpoint', default='', help="Where to save model to")
 
 # misc
 parser.add_argument("--split", dest="split", type=float, metavar='<float>', default=0.9, help='Train/test split')  # noqa
@@ -124,6 +154,10 @@ directories_needed = [args.model_dir, args.image_dir]
 for dir_name in directories_needed:
     os.makedirs(dir_name, exist_ok=True)
 
+if args.checkpoint == '':
+    args.checkpoint = os.path.join(args.model_dir, args.run_code + ".checkpoint")
+
+print('Will save model to {}'.format(args.checkpoint))
 
 ##########
 ### Train
@@ -196,6 +230,8 @@ for epoch in range(args.n_epochs):
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
     if epoch % args.val_rate == 0:
         test(args, model, test_loader, prefix='val ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
+
+utils.save_checkpoint(args, model)
 
 test(args, model, train_loader, prefix='train ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
 test(args, model, test_loader, prefix='test ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))

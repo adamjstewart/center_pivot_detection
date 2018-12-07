@@ -10,6 +10,18 @@ import torch
 from torch.utils.data import SubsetRandomSampler
 from collections import defaultdict
 
+
+
+def save_checkpoint(args, model):
+    print('Saving model to {}'.format(args.checkpoint))
+    checkpoint = {}
+    checkpoint['args'] = args  # Makes retrieval of hyperparameters easy
+    checkpoint['model'] = model.state_dict()
+    torch.save(checkpoint, args.checkpoint)
+    del checkpoint
+
+
+
 def binary_splitter(dataset, frac, shuffle=True, batch_size=32, debug=False, num_workers=4, selected_indices=None, confounder_group_size=None):
     dataset_size = len(dataset)
     if debug:
