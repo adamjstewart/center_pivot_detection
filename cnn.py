@@ -87,8 +87,7 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
         target = (target > 0).float()
         yhat = model(data)
         ### Compute
-
-        batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().numpy(), (yhat.detach() > 0.5).cpu().numpy())
+        batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().int().view(-1).numpy(), (yhat.detach() > 0.5).cpu().int().view(-1).numpy())
         if conf_mat is None:
             conf_mat = batch_conf_mat
         else:
@@ -98,8 +97,8 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
         if vis_file != '':
             predictions.extend([((yhat[idx, :, :].detach() > 0.5).cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
 
-    print('{} net conf_matrix: {}'.format(prefix, conf_mat))
-    acc, prec, rec = (conf_mat[0, 0] + conf_mat[1, 1]) / np.sum(conf_mat), conf_mat[0, 0] / (conf_mat[0, 0] + conf_mat[0, 1]), conf_mat[0, 0] / (conf_mat[0, 0] + conf_mat[1, 0])
+    print('{} net conf_matrix: \n{}'.format(prefix, conf_mat))
+    acc, prec, rec = (conf_mat[1, 1] + conf_mat[0, 0]) / np.sum(conf_mat), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[0, 1]), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[1, 0])
     f1 = 2 * prec * rec / (prec + rec)
     print('{} net accuracy: {}'.format(prefix, acc))
     print('{} net precision: {}'.format(prefix, prec))
@@ -114,24 +113,24 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
 ### argparse
 ##########
 parser = argparse.ArgumentParser()
-parser.add_argument('--d', dest='data_dir', type=str, default='data/baby_data', help='Data directory.')
-parser.add_argument("--base_output", dest="base_output", default="outputs/", help="Directory which will have folders per run")  # noqa
-parser.add_argument("--run", dest='run_code', type=str, default='', help='Name this run. It will be part of file names for convenience')  # noqa
+parser.add_argument('-d', "--data_dir", dest='data_dir', type=str, default='data/baby_data', help='Data directory.')
+parser.add_argument("-o", "--base_output", dest="base_output", default="outputs/", help="Directory which will have folders per run")  # noqa
+parser.add_argument("-r", "--run", dest='run_code', type=str, default='', help='Name this run. It will be part of file names for convenience')  # noqa
 parser.add_argument("--model_dir", dest="model_dir", type=str, default="models", help="Subdirectory to save models")  # noqa
 parser.add_argument("--image_dir", dest="image_dir", type=str, default="images", help="Subdirectory to save images")  # noqa
 parser.add_argument("-chk", "--checkpoint", dest='checkpoint', default='', help="Where to save model to")
 
 # misc
-parser.add_argument("--split", dest="split", type=float, metavar='<float>', default=0.9, help='Train/test split')  # noqa
+parser.add_argument("-s", "--split", dest="split", type=float, metavar='<float>', default=0.8, help='Train/test split')  # noqa
 parser.add_argument("--seed", dest="seed", type=int, metavar='<int>', default=1337, help="Random seed (default=1337)")  # noqa
 parser.add_argument("--cuda", dest="cuda", default=False, action="store_true")  # noqa
 parser.add_argument("--debug", default=False, action="store_true", help="Debug mode")
-parser.add_argument("--b", dest="batch_size", default=32, type=int, help="Batch size")
-parser.add_argument("--v", dest="val_rate", default=8, type=int, help="Validation rate")
-parser.add_argument("--e", dest="n_epochs", default=1000, type=int, help="Number of epochs")
-parser.add_argument("--lr", dest="lr", type=float, metavar='<float>', default=0.001, help='Learning rate')  # noqa
+parser.add_argument("-b", "--batch_size", dest="batch_size", default=32, type=int, help="Batch size")
+parser.add_argument("-v", "--val_rate", dest="val_rate", default=8, type=int, help="Validation rate")
+parser.add_argument("-e", "--epochs", dest="n_epochs", default=1000, type=int, help="Number of epochs")
+parser.add_argument("-lr", "--lr", dest="lr", type=float, metavar='<float>', default=0.001, help='Learning rate')  # noqa
 parser.add_argument("--weight_decay", dest="weight_decay", type=float, metavar='<float>', default=1e-5, help='Weight decay')  # noqa
-parser.add_argument("--arch", dest="arch", type=str, metavar='<float>', choices=architectures.keys(), default='unet', help='Architecture')  # noqa
+parser.add_argument("-a", "--arch", dest="arch", type=str, metavar='<float>', choices=architectures.keys(), default='unet', help='Architecture')  # noqa
 args = parser.parse_args()
 
 

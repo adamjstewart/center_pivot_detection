@@ -24,9 +24,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data.sampler as samplers
-from unet import (
-    Unet_cat,
-    Unet_add,
+from modules.unet import (
+    UNet_cat,
+    UNet_add,
 )
 
 
@@ -49,7 +49,7 @@ class CNNTS3D_add(nn.Module):
             nn.LeakyReLU(),
         )
         # Spatial
-        self.unet_add = Unet_add(in_channels=2 * embedding_size)
+        self.unet_add = UNet_add(in_channels=2 * embedding_size)
 
 
         if loadable_state_dict:
@@ -84,7 +84,7 @@ class CNNTS3D_cat(nn.Module):
             nn.LeakyReLU(),
         )
         # Spatial
-        self.unet_cat = Unet_cat(in_channels=2 * embedding_size)
+        self.unet_cat = UNet_cat(in_channels=2 * embedding_size)
 
 
         if loadable_state_dict:
@@ -106,7 +106,7 @@ class CNNTS2D_add(nn.Module):
         super(CNNTS2D_add, self).__init__()
         self.args = args
         self.inC, self.inT = inC, inT
-        self.unet_add = Unet_add(in_channels=inC * inT)
+        self.unet_add = UNet_add(in_channels=inC * inT)
         if loadable_state_dict:
             self.load_state_dict(loadable_state_dict)
 
@@ -121,7 +121,7 @@ class CNNTS2D_cat(nn.Module):
         super(CNNTS2D_cat, self).__init__()
         self.args = args
         self.inC, self.inT = inC, inT
-        self.unet_cat = Unet_cat(in_channels=inC * inT)
+        self.unet_cat = UNet_cat(in_channels=inC * inT)
         if loadable_state_dict:
             self.load_state_dict(loadable_state_dict)
 

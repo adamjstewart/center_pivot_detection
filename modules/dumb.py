@@ -29,7 +29,7 @@ class Gauss(nn.Module):
         self.mu = nn.Parameter(torch.randn((1, ), dtype=torch.float))
 
     def forward(self, x):
-        return torch.sigmoid(self.mu + self.sigma * torch.randn_like(x, dtype=torch.float, device='cuda' if args.cuda else 'cpu')).mean(dim=1)
+        return torch.sigmoid(self.mu + self.sigma * torch.randn_like(x, dtype=torch.float, device='cuda' if self.args.cuda else 'cpu')).mean(dim=1)
 
 
 class Constant(nn.Module):
