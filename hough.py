@@ -17,6 +17,7 @@ import numpy as np
 from osgeo import gdal
 gdal.UseExceptions()
 import argparse
+import imageio
 
 from skimage.transform import hough_circle, hough_circle_peaks
 from skimage.feature import canny
@@ -46,6 +47,10 @@ for (min_r, max_r, nr) in [(8, 64, 64)]:
 
         for cidx in range(data.shape[0]):  # Over channels
             edges = canny(data[cidx, :, :])
+            int_edges = np.zeros((256,256))
+            int_edges[edges] = 1
+            imageio.imwrite("test.pgm", int_edges)
+            print(edges.shape)
             hough_res = hough_circle(edges, hough_radii)
             for thr in thresholds:
                 accums, cxs, cys, radii = hough_circle_peaks(hough_res, hough_radii, threshold=thr)

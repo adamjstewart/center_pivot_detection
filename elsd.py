@@ -17,33 +17,59 @@ import numpy as np
 from osgeo import gdal
 gdal.UseExceptions()
 import argparse
-from imageio import imread
-from imageio import imwrite
+import imageio
 
 from skimage.transform import hough_circle, hough_circle_peaks
 from skimage.feature import canny
 from skimage.draw import circle
+from skimage import io
 
 from datasets import landsat
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--d', dest='data_dir', type=str, default='./data', help='Data directory.')
+parser.add_argument('--d', dest='data_dir', type=str, default='data', help='Data directory.')
 args = parser.parse_args()
 
 
 dataset = landsat.SingleScene(root=args.data_dir, size=256)
-accuracy = np.zeros(len(dataset))
 
-for i in range(len(dataset)):  # Over datapoints
-    data, target, y, x = dataset[i]
-    result = np.zeros(data.shape)
-    print(data.shape)
-    print(target.shape)
-    for j in range(data.shape[0]):
-        print(data[j,:,:])
-        imwrite("./ELSD/test.pgm", data[j,:,:])
-        os.system("./ELSD/elsd ./ELSD/test.pgm")
-        result[j,:,:] = Segment("./ELSD/test.pgm")
-    accuracy[i] = np.mean(result, target)
+for (min_r, max_r, nr) in [(8, 64, 64)]:
+    thresholds = list(np.linspace(0.1, 0.9, 20))
+    print("min_r:{}, max_r:{}, nr:{}, thresholds:{}".format(min_r, max_r, nr, thresholds))
+    # Hough transforms don't have any trainable parameters. We will simply do a hyperparam search
+    hough_radii = np.arange(min_r, max_r, nr)
 
-print(np.mean(accuracy))
+    accuracies = {thr: np.zeros(len(dataset), dtype=np.float) for thr in thresholds}
+    for i in range(len(dataset)):  # Over datapoints
+        data, target, y, x = dataset[i]
+        target = target > 0
+
+        pred = {thr: np.zeros(data.shape, dtype=bool) for thr in thresholds}
+
+        for cidx in range(data.shape[0]):  # Over channels
+            # edges = canny(data[cidx, :, :])
+            imageio.imwrite("./ELSD/test.pgm", data[cidx,:,:])
+            os.system("./ELSD/elsd ./ELSD/test.pgm")
+            os.system("inkscape -z -e ./ELSD/test.png ./ELSD/test.pgm.svg")
+            result = io.imread('./ELSD/test.png', as_gray=True)
+            edges = result>0
+
+            int_edges = np.zeros((256,256))
+            int_edges[edges] = 1
+            imageio.imwrite("test.pgm", int_edges)
+            hough_res = hough_circle(edges, hough_radii)
+            for thr in thresholds:
+                accums, cxs, cys, radii = hough_circle_peaks(hough_res, hough_radii, threshold=thr)
+                for cx, cy, r in zip(cxs, cys, radii):
+                    circx, circy = circle(cx, cy, r, shape=(pred[thr].shape[1], pred[thr].shape[2]))
+                    pred[thr][cidx, circx, circy] = True
+
+        # Compute accuracy
+        for thr in thresholds:
+            accuracies[thr][i] = np.mean(target == (pred[thr].max(axis=0)))  # Simple max pool over channels
+    best_thr = None
+    for thr in thresholds:
+        if ((best_thr is None) or (np.mean(accuracies[thr]) > np.mean(accuracies[best_thr]))):
+            best_thr = thr
+        print("accuracy[{}][{}, {}, {}]:{}".format(thr, min_r, max_r, nr, np.mean(accuracies[thr])))
+    print("best: accuracy[{}][{}, {}, {}]:{}".format(best_thr, min_r, max_r, nr, np.mean(accuracies[best_thr])))
