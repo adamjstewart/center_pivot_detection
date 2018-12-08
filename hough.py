@@ -25,7 +25,7 @@ from skimage.draw import circle
 from datasets import landsat
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--d', dest='data_dir', type=str, default='data/baby_data', help='Data directory.')
+parser.add_argument('--d', dest='data_dir', type=str, default='data', help='Data directory.')
 args = parser.parse_args()
 
 
