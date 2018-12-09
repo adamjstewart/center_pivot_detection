@@ -164,7 +164,7 @@ print('Will save model to {}'.format(args.checkpoint))
 
 # dataset stuff
 
-normalization_transform = torchvision.transforms.Normalize(
+normalization_transform = custom_transforms.Normalize(
     mean=[
         519.2332344309812,
         800.9046442974101,
@@ -231,7 +231,7 @@ for epoch in range(args.n_epochs):
     print("acc[{}]={}".format(epoch, np.mean(accs)))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
     if epoch % args.val_rate == 0:
-        test(args, model, test_loader, prefix='val ', dataset=val_dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
+        test(args, model, val_loader, prefix='val ', dataset=val_dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
 
 utils.save_checkpoint(args, model)
 

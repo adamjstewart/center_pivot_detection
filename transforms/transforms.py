@@ -12,6 +12,27 @@ class ToTensor:
         return torch.from_numpy(pic).float()
 
 
+class Normalize:
+    """Normalize a tensor image with mean and standard deviation."""
+
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        """
+        Parameters:
+            tensor (Tensor): Tensor image of size (C, T, H, W) to be normalized.
+
+        Returns:
+            Tensor: Normalized Tensor image.
+        """
+        for band in range(tensor.shape[0]):
+            tensor[band] = (tensor[band] - self.mean[band]) / self.std[band]
+
+        return tensor
+
+
 class RandomHorizontalFlip:
     """Horizontally flip the given ``numpy.ndarray`` randomly
     with a given probability."""
