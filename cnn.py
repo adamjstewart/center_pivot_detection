@@ -13,7 +13,7 @@ import numpy as np
 import scipy
 import random
 from random import shuffle
-from time import time
+import time
 import sys
 import pdb
 import pickle as pk
@@ -89,7 +89,7 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
             target = (target > 0).float()
             yhat = model(data)
             ### Compute
-            batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().int().view(-1).numpy(), (yhat.detach() > 0.5).cpu().int().view(-1).numpy())
+            batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().int().view(-1).numpy(), (yhat.detach() > 0.5).cpu().int().view(-1).numpy(), labels=[0, 1])
             if conf_mat is None:
                 conf_mat = batch_conf_mat
             else:
@@ -210,15 +210,16 @@ adam = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay
 for epoch in range(args.n_epochs):
     losses = []
     accs = []
+    start = time.time()
     # plusses = []
     for bidx, (data, target, y, x) in enumerate(train_loader):
         bs = x.shape[0]
         if args.cuda:
-            data = data.contiguous().cuda()
-            target = target.contiguous().cuda()
+            data = data.cuda()
+            target = target.cuda()
         else:
-            data = data.contiguous()
-            target = target.contiguous()
+            data = data
+            target = target
         target = (target > 0).float()
         pred = model(data)
         batch_acc = ((pred.detach() > 0.5) == (target > 0)).float().mean().item()
@@ -232,13 +233,14 @@ for epoch in range(args.n_epochs):
         loss.backward()
         adam.step()
         del loss, data, target  # BUHBYE
-    print("loss[{}]={}".format(epoch, np.mean(losses)))
-    print("acc[{}]={}".format(epoch, np.mean(accs)))
+    print("train loss[{}]={}".format(epoch, np.mean(losses)))
+    print("train acc[{}]={}".format(epoch, np.mean(accs)))
+    print("train time[{}]={}".format(epoch, time.time() - start))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
     if epoch % args.val_rate == 0:
         test(args, model, val_loader, prefix='val ', dataset=val_dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
         util_functions.save_checkpoint(args, model)
-
+        model.train()
 
 test(args, model, train_loader, prefix='train ', dataset=train_dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
 test(args, model, test_loader, prefix='test ', dataset=test_dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))

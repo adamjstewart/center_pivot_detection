@@ -40,13 +40,13 @@ class CNNTS3D_add(nn.Module):
         # Temporal Conv
         self.temporal_embedder = nn.Sequential(  # T = 12
             nn.Conv2d(inC, 16, (3, 1), stride=(1, 1), padding=(1, 0)),  # T = 12
-            nn.LeakyReLU(),
+            nn.LeakyReLU(negative_slope=0.2),
             nn.BatchNorm2d(16),
             nn.Conv2d(16, 32, (4, 1), stride=(2, 1), padding=(1, 0)),  # T = 6
-            nn.LeakyReLU(),
+            nn.LeakyReLU(negative_slope=0.2),
             nn.BatchNorm2d(32),
             nn.Conv2d(32, embedding_size, (4, 1), stride=(2, 1), padding=(1, 0)),  # T = 3
-            nn.LeakyReLU(),
+            nn.LeakyReLU(negative_slope=0.2),
         )
         # Spatial
         self.unet_add = UNet_add(args, in_channels=3 * embedding_size)
@@ -75,13 +75,13 @@ class CNNTS3D_cat(nn.Module):
         # Temporal Conv
         self.temporal_embedder = nn.Sequential(  # T = 12
             nn.Conv2d(inC, 16, (3, 1), stride=(1, 1), padding=(1, 0)),  # T = 12
-            nn.LeakyReLU(),
+            nn.LeakyReLU(negative_slope=0.2),
             nn.BatchNorm2d(16),
             nn.Conv2d(16, 32, (4, 1), stride=(2, 1), padding=(1, 0)),  # T = 5
-            nn.LeakyReLU(),
+            nn.LeakyReLU(negative_slope=0.2),
             nn.BatchNorm2d(32),
             nn.Conv2d(32, embedding_size, (4, 1), stride=(2, 1), padding=(1, 0)),  # T = 3
-            nn.LeakyReLU(),
+            nn.LeakyReLU(negative_slope=0.2),
         )
         # Spatial
         self.unet_cat = UNet_cat(args, in_channels=3 * embedding_size)
