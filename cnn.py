@@ -288,7 +288,6 @@ for epoch in range(args.n_epochs):
         else:
             data = data
             target = target
-
         target = (target > 0).float()
         pred = model(data)
         batch_acc = ((pred.detach() > 0.5) == (target > 0)).float().mean().item()
