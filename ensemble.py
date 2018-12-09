@@ -9,8 +9,8 @@ from hough import hough
 from elsd import elsd
 from datasets import landsat
 from network import Network
-
-train_dataset = landsat.TimeSeries(subset='train', root='data', pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',
+data_folder = 'data'
+train_dataset = landsat.TimeSeries(subset='train', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',
                       'pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
 print("Training Data Loaded")
 # Assuming that the train dataset is given as time, channel, H, W
@@ -34,9 +34,9 @@ for i in range(len(train_dataset)):
 net1 = Network(data_net_hough, target_net) # Training
 net2 = Network(data_net_elsd, target_net)
 
-# val_dataset = landsat.TimeSeries(subset='val', root='data', pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data','pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
-test_dataset = landsat.TimeSeries(subset='test', root='data', pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data','pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
-# all_dataset = landsat.TimeSeries(subset='all', root='data', pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
+# val_dataset = landsat.TimeSeries(subset='val', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data','pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
+test_dataset = landsat.TimeSeries(subset='test', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data','pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
+# all_dataset = landsat.TimeSeries(subset='all', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
 print("Data Loaded")
 data, _, _, _ = test_dataset[0]
 test_data_net_hough = np.zeros((len(test_dataset), data.shape[0], data.shape[2], data.shape[3]))
