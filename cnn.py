@@ -313,7 +313,7 @@ for epoch in range(args.n_epochs):
 
 test(args, model, train_loader, prefix='train ', dataset=train_dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
 test(args, model, test_loader, prefix='test ', dataset=test_dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))
-test(args, model, all_loader, prefix='all ', dataset=all_dataset, vis_file=os.path.join(args.image_dir, args.run_code, 'all_predictions.tif'))
+test(args, model, all_loader, prefix='all ', dataset=all_dataset, vis_file=os.path.join(args.image_dir, 'all_predictions.tif'))
 
 ##########
 ### Le end
