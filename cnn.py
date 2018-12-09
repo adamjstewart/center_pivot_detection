@@ -30,7 +30,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data.sampler as samplers
 
-from datasets import landsat
+from datasets import *
 from transforms import transforms as custom_transforms
 import torchvision
 
@@ -164,7 +164,7 @@ print('Will save model to {}'.format(args.checkpoint))
 
 # dataset stuff
 
-baby_data_normalization_transform = torchvision.transforms.Normalize(
+normalization_transform = torchvision.transforms.Normalize(
     mean=[
         519.2332344309812,
         800.9046442974101,
@@ -182,19 +182,22 @@ baby_data_normalization_transform = torchvision.transforms.Normalize(
         1396.344680066366
     ]
 )
-baby_data_transform = torchvision.transforms.Compose([
+transform = torchvision.transforms.Compose([
     custom_transforms.ToTensor(),
-    baby_data_normalization_transform,
+    normalization_transform,
 ])
 
-dataset = landsat.SingleScene(
-    root=args.data_dir,
-    size=256,
-    transform=baby_data_transform
-)
+train_dataset = TimeSeries(subset='train', transform=transform)
+val_dataset = TimeSeries(subset='val', transform=transform)
+test_dataset = TimeSeries(subset='test', transform=transform)
+all_dataset = TimeSeries(subset='all', transform=transform)
 
-num_workers = multiprocessing.cpu_count()
-train_loader, test_loader = utils.binary_splitter(dataset, args.split, batch_size=args.batch_size, num_workers=num_workers)
+num_workers = min(multiprocessing.cpu_count(), args.batch_size)
+
+train_loader = DataLoader(train_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
+val_loader = DataLoader(val_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
+test_loader = DataLoader(test_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
+all_loader = DataLoader(all_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
 
 model = architectures[args.arch](args)
 if args.cuda:
@@ -228,13 +231,13 @@ for epoch in range(args.n_epochs):
     print("acc[{}]={}".format(epoch, np.mean(accs)))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
     if epoch % args.val_rate == 0:
-        test(args, model, test_loader, prefix='val ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
+        test(args, model, test_loader, prefix='val ', dataset=val_dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
 
 utils.save_checkpoint(args, model)
 
-test(args, model, train_loader, prefix='train ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
-test(args, model, test_loader, prefix='test ', dataset=dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))
-test(args, model, itertools.chain(train_loader, test_loader), prefix='all ', dataset=dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'all_predictions.tif'))
+test(args, model, train_loader, prefix='train ', dataset=train_dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
+test(args, model, test_loader, prefix='test ', dataset=test_dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))
+test(args, model, all_loader, prefix='all ', dataset=all_dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'all_predictions.tif'))
 
 ##########
 ### Le end
