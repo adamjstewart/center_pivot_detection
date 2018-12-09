@@ -19,8 +19,6 @@ PIVOTS = os.path.join('/data/cpd/data/u/sciteam/stewart1/center_pivot_detection/
                       'pivots_2005_utm14_{:03d}{:03d}_clipped.tif')
 
 
-# raise NotImplementedError("Set your root!")
-
 class SingleScene(Dataset):
     """This Dataset loads subsets of a single scene."""
 
@@ -145,7 +143,7 @@ class TimeSeries(Dataset):
     """This Dataset loads subsets of a time series of data."""
 
     def __init__(self, root=ROOT, pivots=PIVOTS, path=29, row=32,
-                 size=128, length=1000, subset='train',
+                 size=128, length=1000, subset='train', time=True,
                  transform=None, target_transform=None):
         """Initializes a new Dataset.
 
@@ -157,6 +155,7 @@ class TimeSeries(Dataset):
             size (int, optional): the height and width of each subset
             length (int, optional): the number of random samples per epoch
             subset (str, optional): one of 'train', 'val', 'test', or 'all'
+            time (bool, optional): whether or not to return a time series
             transform (callable, optional): a function/transform that takes in
                 a numpy array and returns a transformed version
             target_transform (callable, optional): a function/transform that
@@ -169,6 +168,7 @@ class TimeSeries(Dataset):
         self.size = size
         self.length = length
         self.subset = subset
+        self.time = time
         self.transform = transform
         self.target_transform = target_transform
 
@@ -209,16 +209,21 @@ class TimeSeries(Dataset):
         Returns:
             int: the number of subsets of the image
         """
-        height, width = self.segmentation.shape
+        _, timesteps, height, width = self.data.shape
         height //= self.size
         width //= self.size
 
         if self.subset == 'train':
-            return self.length
+            out = self.length
         elif self.subset == 'all':
-            return height * width
+            out = height * width
         else:
-            return (height // 2) * (width // 2)
+            out = (height // 2) * (width // 2)
+
+        if not self.time:
+            out *= timesteps
+
+        return out
 
     def __getitem__(self, idx):
         """An individual subset of the image.
@@ -235,7 +240,14 @@ class TimeSeries(Dataset):
         if idx >= len(self):
             raise StopIteration
 
-        height, width = self.segmentation.shape
+        _, timesteps, height, width = self.data.shape
+
+        # If time=True, return an entire time slice,
+        # otherwise return a single time step
+        t = slice(None)
+        if not self.time:
+            t = idx % timesteps
+            idx = idx // timesteps
 
         if self.subset == 'train':
             # Right quadrants
@@ -275,7 +287,7 @@ class TimeSeries(Dataset):
             y = row * self.size
             x = col * self.size
 
-        data = self.data[:, :, y:y + self.size, x:x + self.size]
+        data = self.data[:, t, y:y + self.size, x:x + self.size]
         target = self.segmentation[y:y + self.size, x:x + self.size]
 
         # Apply any requested transforms
@@ -285,18 +297,30 @@ class TimeSeries(Dataset):
         if self.target_transform:
             target = self.target_transform(target)
 
-        return data, target, y, x
+        return data, target, t, y, x
 
     def write(self, predictions, filename):
         """Write a set of predictions to a GeoTIFF file.
 
         Parameters:
-            predictions (np.ndarray): a 2D numpy array of predictions
+            predictions (np.ndarray): a 2D or 3D numpy array of predictions
             filename (str): the output filename
         """
-        driver = self.dataset.GetDriver()
-        dst_ds = driver.CreateCopy(filename, self.dataset)
+        assert predictions.ndim == 2 or predictions.ndim == 3
 
-        # Overwrite the raster band with the predicted labels
-        band = dst_ds.GetRasterBand(1)
-        band.WriteArray(predictions)
+        driver = self.dataset.GetDriver()
+
+        if predictions.ndim == 2:
+            dst_ds = driver.CreateCopy(filename, self.dataset)
+
+            # Overwrite the raster band with the predicted labels
+            band = dst_ds.GetRasterBand(1)
+            band.WriteArray(predictions)
+        else:
+            for t in range(predictions[0]):
+                filename = filename.replace('.tif', '_{}.tif'.format(t))
+                dst_ds = driver.CreateCopy(filename, self.dataset)
+
+                # Overwrite the raster band with the predicted labels
+                band = dst_ds.GetRasterBand(1)
+                band.WriteArray(predictions[t])
