@@ -1,9 +1,7 @@
 """
-CNN for circle detection
-
-python cnn.py --help
-(we have argparse)
+Level 2 models
 """
+
 
 
 import os
@@ -54,9 +52,6 @@ from modules.cnn_ts import (
     CNNTS2D_add,
     CNNTS3D_add,
 )
-from modules.cnn_pool import (
-    UNet_fc_pool,
-)
 
 architectures = {
     'randn': Gauss,
@@ -68,7 +63,6 @@ architectures = {
     'l33d_cat': CNNTS3D_cat,  # Need better names!
     'l32d_add': CNNTS2D_add,  # Need better names!
     'l33d_add': CNNTS3D_add,  # Need better names!
-    'l2_fc_pool': UNet_fc_pool,   # Need better names!
 }
 
 
@@ -84,7 +78,6 @@ time_series_architectures = [
     'l33d_cat',
     'l32d_add',
     'l33d_add',
-    'l2_fc_pool',
 ]
 
 ##########
@@ -104,8 +97,9 @@ def test(args, model, test_loader, dataset, prefix='', vis_file=''):
             target_array = dataset.segmentation > 0
         else:
             timesteps = dataset.data.shape[1]
+            pdb.set_trace()
             prediction_array = np.zeros((timesteps, *(list(dataset.segmentation.shape))), dtype=dataset.segmentation.dtype)
-            target_array = np.tile(dataset.segmentation > 0, (timesteps, *([1] * dataset.segmentation.ndim)))
+            target_array = np.tile(dataset.segmentation > 0, (timesteps, 1, 1, 1))
 
         for data, target, t, y, x in test_loader:
             if args.cuda:
@@ -313,7 +307,7 @@ for epoch in range(args.n_epochs):
 
 test(args, model, train_loader, prefix='train ', dataset=train_dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
 test(args, model, test_loader, prefix='test ', dataset=test_dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))
-test(args, model, all_loader, prefix='all ', dataset=all_dataset, vis_file=os.path.join(args.image_dir, args.run_code, 'all_predictions.tif'))
+test(args, model, all_loader, prefix='all ', dataset=all_dataset, vis_file=os.path.join(args.data_dir, args.run_code, 'all_predictions.tif'))
 
 ##########
 ### Le end

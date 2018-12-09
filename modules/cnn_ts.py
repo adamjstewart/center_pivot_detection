@@ -85,9 +85,9 @@ class CNNTS3D_cat(nn.Module):
         # Spatial
         self.unet_cat = UNet_cat(args, in_channels=3 * embedding_size)
 
-
         if loadable_state_dict:
             self.load_state_dict(loadable_state_dict)
+
 
     def forward(self, x):
         # x : bs * C * T * H * W

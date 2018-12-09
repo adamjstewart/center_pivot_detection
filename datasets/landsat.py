@@ -8,7 +8,7 @@ import glob
 import numpy as np
 import os
 import random
-
+import pdb
 
 ROOT = '/scratch/sciteam/kaiyug/group/stewart1/data/nebraska/Landsat5/2005'
 PIVOTS = os.path.join('/u/sciteam/stewart1/center_pivot_detection/data',
@@ -297,6 +297,8 @@ class TimeSeries(Dataset):
         if self.target_transform:
             target = self.target_transform(target)
 
+        if isinstance(t, slice):
+            t = np.zeros_like(y) - 1
         return data, target, t, y, x
 
     def write(self, predictions, filename):
@@ -312,12 +314,11 @@ class TimeSeries(Dataset):
 
         if predictions.ndim == 2:
             dst_ds = driver.CreateCopy(filename, self.dataset)
-
             # Overwrite the raster band with the predicted labels
             band = dst_ds.GetRasterBand(1)
             band.WriteArray(predictions)
         else:
-            for t in range(predictions[0]):
+            for t in range(predictions.shape[0]):
                 filename = filename.replace('.tif', '_{}.tif'.format(t))
                 dst_ds = driver.CreateCopy(filename, self.dataset)
 
