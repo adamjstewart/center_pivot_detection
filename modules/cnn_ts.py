@@ -32,7 +32,7 @@ from modules.unet import (
 
 class CNNTS3D_add(nn.Module):
     def __init__(self, args, loadable_state_dict=None, inC=6, inT=10, embedding_size=16):
-        assert(inT == 10, "Adam, you said I'd get 10 time steps. No more, no less.")
+        # assert(inT == 10, "Adam, you said I'd get 10 time steps. No more, no less.")
         super(CNNTS3D_add, self).__init__()
         self.args = args
         self.inC, self.inT = inC, inT
@@ -49,7 +49,7 @@ class CNNTS3D_add(nn.Module):
             nn.LeakyReLU(),
         )
         # Spatial
-        self.unet_add = UNet_add(in_channels=2 * embedding_size)
+        self.unet_add = UNet_add(args, in_channels=2 * embedding_size)
 
 
         if loadable_state_dict:
@@ -67,7 +67,7 @@ class CNNTS3D_add(nn.Module):
 
 class CNNTS3D_cat(nn.Module):
     def __init__(self, args, loadable_state_dict=None, inC=6, inT=10, embedding_size=16):
-        assert(inT == 10, "Adam, you said I'd get 10 time steps. No more, no less.")
+        # assert(inT == 10, "Adam, you said I'd get 10 time steps. No more, no less.")
         super(CNNTS3D_cat, self).__init__()
         self.args = args
         self.inC, self.inT = inC, inT
@@ -84,7 +84,7 @@ class CNNTS3D_cat(nn.Module):
             nn.LeakyReLU(),
         )
         # Spatial
-        self.unet_cat = UNet_cat(in_channels=2 * embedding_size)
+        self.unet_cat = UNet_cat(args, in_channels=2 * embedding_size)
 
 
         if loadable_state_dict:
@@ -106,7 +106,7 @@ class CNNTS2D_add(nn.Module):
         super(CNNTS2D_add, self).__init__()
         self.args = args
         self.inC, self.inT = inC, inT
-        self.unet_add = UNet_add(in_channels=inC * inT)
+        self.unet_add = UNet_add(args, in_channels=inC * inT)
         if loadable_state_dict:
             self.load_state_dict(loadable_state_dict)
 
@@ -121,7 +121,7 @@ class CNNTS2D_cat(nn.Module):
         super(CNNTS2D_cat, self).__init__()
         self.args = args
         self.inC, self.inT = inC, inT
-        self.unet_cat = UNet_cat(in_channels=inC * inT)
+        self.unet_cat = UNet_cat(args, in_channels=inC * inT)
         if loadable_state_dict:
             self.load_state_dict(loadable_state_dict)
 
