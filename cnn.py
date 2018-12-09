@@ -189,10 +189,15 @@ transform = torchvision.transforms.Compose([
     normalization_transform,
 ])
 
+print('Loading train dataset...')
 train_dataset = TimeSeries(subset='train', transform=transform)
+print('Loading val dataset...')
 val_dataset = TimeSeries(subset='val', transform=transform)
+print('Loading test dataset...')
 test_dataset = TimeSeries(subset='test', transform=transform)
+print('Loading all dataset...')
 all_dataset = TimeSeries(subset='all', transform=transform)
+print('Datasets loaded.')
 
 num_workers = min(multiprocessing.cpu_count(), args.batch_size)
 
@@ -201,22 +206,27 @@ val_loader = DataLoader(val_dataset, args.batch_size, shuffle=True, num_workers=
 test_loader = DataLoader(test_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
 all_loader = DataLoader(all_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
 
+print('Loading model...')
 model = architectures[args.arch](args)
 if args.cuda:
     model = model.cuda()
+    print('Model transferred to GPU.')
 
 adam = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 for epoch in range(args.n_epochs):
+    print('Epoch:', epoch)
     losses = []
     accs = []
     start = time.time()
     # plusses = []
     for bidx, (data, target, y, x) in enumerate(train_loader):
+        print('Batch:', bidx)
         bs = x.shape[0]
         if args.cuda:
             data = data.cuda()
             target = target.cuda()
+            print("Data transferred to GPU")
         else:
             data = data
             target = target
