@@ -226,6 +226,9 @@ class TimeSeries(Dataset):
             int: the starting row the subset was extracted from
             int: the starting col the subset was extracted from
         """
+        if idx >= len(self):
+            raise StopIteration
+
         height, width = self.segmentation.shape
 
         if self.subset == 'train':
