@@ -72,42 +72,43 @@ architectures = {
 ##########
 
 def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
-    model.eval()
-    acc = []
-    if args.cuda:
-        model = model.cuda()
-    if vis_file != '':
-        predictions = []
-
-    conf_mat = None
-    for batch_idx, (data, target, y, x) in enumerate(test_loader):
+    with torch.no_grad():
+        model.eval()  # To be double sure.
+        acc = []
         if args.cuda:
-            data = data.cuda()
-            target = target.cuda()
-        target = (target > 0).float()
-        yhat = model(data)
-        ### Compute
-        batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().int().view(-1).numpy(), (yhat.detach() > 0.5).cpu().int().view(-1).numpy())
-        if conf_mat is None:
-            conf_mat = batch_conf_mat
-        else:
-            conf_mat += batch_conf_mat
+            model = model.cuda()
+        if vis_file != '':
+            predictions = []
 
+        conf_mat = None
+        for batch_idx, (data, target, y, x) in enumerate(test_loader):
+            if args.cuda:
+                data = data.cuda()
+                target = target.cuda()
+            target = (target > 0).float()
+            yhat = model(data)
+            ### Compute
+            batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().int().view(-1).numpy(), (yhat.detach() > 0.5).cpu().int().view(-1).numpy())
+            if conf_mat is None:
+                conf_mat = batch_conf_mat
+            else:
+                conf_mat += batch_conf_mat
+
+
+            if vis_file != '':
+                predictions.extend([((yhat[idx, :, :].detach() > 0.5).cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
+
+        print('{} net conf_matrix: \n{}'.format(prefix, conf_mat))
+        acc, prec, rec = (conf_mat[1, 1] + conf_mat[0, 0]) / np.sum(conf_mat), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[0, 1]), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[1, 0])
+        f1 = 2 * prec * rec / (prec + rec)
+        print('{} net accuracy: {}'.format(prefix, acc))
+        print('{} net precision: {}'.format(prefix, prec))
+        print('{} net recall: {}'.format(prefix, rec))
+        print('{} net f1: {}'.format(prefix, f1))
 
         if vis_file != '':
-            predictions.extend([((yhat[idx, :, :].detach() > 0.5).cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
-
-    print('{} net conf_matrix: \n{}'.format(prefix, conf_mat))
-    acc, prec, rec = (conf_mat[1, 1] + conf_mat[0, 0]) / np.sum(conf_mat), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[0, 1]), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[1, 0])
-    f1 = 2 * prec * rec / (prec + rec)
-    print('{} net accuracy: {}'.format(prefix, acc))
-    print('{} net precision: {}'.format(prefix, prec))
-    print('{} net recall: {}'.format(prefix, rec))
-    print('{} net f1: {}'.format(prefix, f1))
-
-    if vis_file != '':
-        assert(dataset is not None)
-        dataset.write(predictions, vis_file)
+            assert(dataset is not None)
+            dataset.write(predictions, vis_file)
 
 ##########
 ### argparse
@@ -227,6 +228,7 @@ for epoch in range(args.n_epochs):
         adam.zero_grad()
         loss.backward()
         adam.step()
+        del loss
     print("loss[{}]={}".format(epoch, np.mean(losses)))
     print("acc[{}]={}".format(epoch, np.mean(accs)))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
