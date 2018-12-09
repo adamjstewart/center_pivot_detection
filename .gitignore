@@ -10,3 +10,6 @@
 !*.md
 !*.sublime-project
 !.gitignore
+
+# But also
+/data/
