@@ -93,8 +93,9 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
                 data = data.cuda()
                 target = target.cuda()
             yhat = model(data)
-            prediction_array[y: y + dataset.size, x:x + dataset.size] = \
-                (yhat > 0.5).int().cpu().numpy()
+            thresholded_yhat = (yhat > 0.5).int().cpu().numpy()
+            for i in range(yhat.shape[0]):
+                prediction_array[y[i]: y[i] + dataset.size, x[i]:x[i] + dataset.size] = thresholded_yhat[i, ...]
 
         assert prediction_array.shape == target_array.shape
 
@@ -105,20 +106,20 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
         # Extract subset if only using a portion of the full array
         if dataset.subset == 'train':
             # Right quadrants
-            prediction_array = prediction_array[:, prediction_array[1] // 2:]
-            target_array = target_array[:, target[1] // 2:]
+            prediction_array = prediction_array[:, prediction_array.shape[1] // 2:]
+            target_array = target_array[:, target_array.shape[1] // 2:]
         elif dataset.subset == 'val':
             # Bottom left quadrant
             prediction_array = prediction_array[
-                prediction_array[0] // 2:, :prediction_array[1] // 2]
+                (prediction_array.shape[0] // 2):, :(prediction_array.shape[1] // 2)]
             target_array = target_array[
-                target_array[0] // 2:, :target_array[1] // 2]
+                (target_array.shape[0] // 2):, :(target_array.shape[1] // 2)]
         elif dataset.subset == 'test':
             # Top left quadrant
             prediction_array = prediction_array[
-                :prediction_array[0] // 2, :prediction_array[1] // 2]
+                :prediction_array.shape[0] // 2, :prediction_array.shape[1] // 2]
             target_array = target_array[
-                :target_array[0] // 2, :target_array[1] // 2]
+                :target_array.shape[0] // 2, :target_array.shape[1] // 2]
 
         assert prediction_array.shape == target_array.shape
 
@@ -221,8 +222,6 @@ transforms_list = [
     custom_transforms.ToTensor(),
     normalization_transform,
 ]
-if args.arch not in time_series_architectures:
-    transforms_list.append(custom_transforms.ToNonTS())
 transform = torchvision.transforms.Compose(transforms_list)
 
 print('Loading train dataset...')
@@ -266,6 +265,7 @@ for epoch in range(args.n_epochs):
         else:
             data = data
             target = target
+
         target = (target > 0).float()
         pred = model(data)
         batch_acc = ((pred.detach() > 0.5) == (target > 0)).float().mean().item()

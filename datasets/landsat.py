@@ -19,7 +19,7 @@ PIVOTS = os.path.join('/data/cpd/data/u/sciteam/stewart1/center_pivot_detection/
                       'pivots_2005_utm14_{:03d}{:03d}_clipped.tif')
 
 
-raise NotImplementedError("Set your root!")
+# raise NotImplementedError("Set your root!")
 
 class SingleScene(Dataset):
     """This Dataset loads subsets of a single scene."""
