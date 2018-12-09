@@ -67,6 +67,12 @@ architectures = {
     'l33d_add': CNNTS3D_add,  # Need better names!
 }
 
+time_series_architectures = [
+    'l32d_cat',
+    'l33d_cat',
+    'l32d_add',
+    'l33d_add',
+]
 
 ##########
 ### Test
@@ -184,10 +190,13 @@ normalization_transform = custom_transforms.Normalize(
         1396.344680066366
     ]
 )
-transform = torchvision.transforms.Compose([
+transforms_list = [
     custom_transforms.ToTensor(),
     normalization_transform,
-])
+]
+if args.arch not in time_series_architectures:
+    transforms_list.append(custom_transforms.ToNonTS())
+transform = torchvision.transforms.Compose(transforms_list)
 
 print('Loading train dataset...')
 train_dataset = TimeSeries(subset='train', transform=transform)

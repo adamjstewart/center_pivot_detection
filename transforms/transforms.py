@@ -12,6 +12,17 @@ class ToTensor:
         return torch.from_numpy(pic).float()
 
 
+class ToNonTS:
+    """Convert a ``numpy.ndarray`` to tensor."""
+
+    def __call__(self, ncthw_array):
+        n, c, t, h, w = ncthw_array.shape
+        if isinstance(ncthw_array, np.array):  # Numpy array
+            return np.reshape(ncthw_array, (n, c * t, h, w))
+        else:  # Torch tensor
+            return ncthw_array.view(n, c * t, h, w)
+
+
 class Normalize:
     """Normalize a tensor image with mean and standard deviation."""
 
