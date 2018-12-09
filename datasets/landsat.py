@@ -14,6 +14,9 @@ ROOT = '/scratch/sciteam/kaiyug/group/stewart1/data/nebraska/Landsat5/2005'
 PIVOTS = os.path.join('/u/sciteam/stewart1/center_pivot_detection/data',
                       'pivots_2005_utm14_{:03d}{:03d}_clipped.tif')
 
+ROOT = '/data/cpd/data/'
+PIVOTS = os.path.join('/data/cpd/data/u/sciteam/stewart1/center_pivot_detection/data',
+                      'pivots_2005_utm14_{:03d}{:03d}_clipped.tif')
 
 class SingleScene(Dataset):
     """This Dataset loads subsets of a single scene."""
@@ -139,7 +142,7 @@ class TimeSeries(Dataset):
     """This Dataset loads subsets of a time series of data."""
 
     def __init__(self, root=ROOT, pivots=PIVOTS, path=29, row=32,
-                 size=128, length=10000, subset='train',
+                 size=128, length=1000, subset='train',
                  transform=None, target_transform=None):
         """Initializes a new Dataset.
 

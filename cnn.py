@@ -221,12 +221,12 @@ for epoch in range(args.n_epochs):
     start = time.time()
     # plusses = []
     for bidx, (data, target, y, x) in enumerate(train_loader):
-        print('Batch:', bidx)
+        # print('Batch:', bidx)
         bs = x.shape[0]
         if args.cuda:
             data = data.cuda()
             target = target.cuda()
-            print("Data transferred to GPU")
+            # print("Data transferred to GPU")
         else:
             data = data
             target = target
