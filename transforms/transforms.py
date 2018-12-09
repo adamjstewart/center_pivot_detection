@@ -16,11 +16,11 @@ class ToNonTS:
     """Convert a ``numpy.ndarray`` to tensor."""
 
     def __call__(self, ncthw_array):
-        n, c, t, h, w = ncthw_array.shape
-        if isinstance(ncthw_array, np.array):  # Numpy array
-            return np.reshape(ncthw_array, (n, c * t, h, w))
+        c, t, h, w = ncthw_array.shape
+        if isinstance(ncthw_array, np.ndarray):  # Numpy array
+            return np.reshape(ncthw_array, (c * t, h, w))
         else:  # Torch tensor
-            return ncthw_array.view(n, c * t, h, w)
+            return ncthw_array.view(c * t, h, w)
 
 
 class Normalize:

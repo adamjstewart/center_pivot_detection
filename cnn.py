@@ -121,7 +121,7 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
 ### argparse
 ##########
 parser = argparse.ArgumentParser()
-parser.add_argument('-d', "--data_dir", dest='data_dir', type=str, default='data/baby_data', help='Data directory.')
+parser.add_argument('-d', "--data_dir", dest='data_dir', type=str, default='data', help='Data directory.')
 parser.add_argument("-o", "--base_output", dest="base_output", default="outputs/", help="Directory which will have folders per run")  # noqa
 parser.add_argument("-r", "--run", dest='run_code', type=str, default='', help='Name this run. It will be part of file names for convenience')  # noqa
 parser.add_argument("--model_dir", dest="model_dir", type=str, default="models", help="Subdirectory to save models")  # noqa
@@ -146,6 +146,7 @@ args.cuda = args.cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
+args.base_output = os.path.join(args.data_dir, args.base_output)
 os.makedirs(args.base_output, exist_ok=True)
 if len(args.run_code) == 0:
     # Generate a run code by counting number of directories in oututs
@@ -153,8 +154,8 @@ if len(args.run_code) == 0:
     args.run_code = 'run{}'.format(run_count)
 print("Using run_code: {}".format(args.run_code))
 # If directory doesn't exist, create it
-args.model_dir = os.path.join(args.data_dir, args.run_code, args.model_dir)  # noqa
-args.image_dir = os.path.join(args.data_dir, args.run_code)  # noqa
+args.model_dir = os.path.join(args.base_output, args.run_code, args.model_dir)  # noqa
+args.image_dir = os.path.join(args.base_output, args.run_code)  # noqa
 
 directories_needed = [args.model_dir, args.image_dir]
 
@@ -208,7 +209,7 @@ print('Loading all dataset...')
 all_dataset = TimeSeries(subset='all', transform=transform)
 print('Datasets loaded.')
 
-num_workers = min(multiprocessing.cpu_count(), args.batch_size)
+num_workers = min(multiprocessing.cpu_count() // 4, args.batch_size)
 
 train_loader = DataLoader(train_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
 val_loader = DataLoader(val_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
