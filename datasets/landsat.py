@@ -238,6 +238,7 @@ class TimeSeries(Dataset):
         height, width = self.segmentation.shape
 
         if self.subset == 'train':
+            # Right quadrants
             # Return a random subset
             xl = width // 2
             xr = width - self.size
@@ -247,6 +248,7 @@ class TimeSeries(Dataset):
             yl = height - self.size
             y = random.randint(yu, yl)
         elif self.subset == 'val':
+            # Bottom left quadrant
             # Convert the index to a (row, col) location
             row = idx // (width // 2 // self.size)
             col = idx % (width // 2 // self.size)
@@ -255,6 +257,7 @@ class TimeSeries(Dataset):
             y = row * self.size + (height // 2)
             x = col * self.size
         elif self.subset == 'test':
+            # Top left quadrant
             # Convert the index to a (row, col) location
             row = idx // (width // 2 // self.size)
             col = idx % (width // 2 // self.size)
@@ -263,6 +266,7 @@ class TimeSeries(Dataset):
             y = row * self.size
             x = col * self.size
         else:
+            # All quadrants
             # Convert the index to a (row, col) location
             row = idx // (width // self.size)
             col = idx % (width // self.size)
@@ -287,16 +291,12 @@ class TimeSeries(Dataset):
         """Write a set of predictions to a GeoTIFF file.
 
         Parameters:
-            predictions (list): a list of (prediction, y, x) tuples
+            predictions (np.ndarray): a 2D numpy array of predictions
             filename (str): the output filename
         """
         driver = self.dataset.GetDriver()
         dst_ds = driver.CreateCopy(filename, self.dataset)
 
-        prediction_array = np.zeros_like(self.segmentation)
-        for prediction, y, x in predictions:
-            prediction_array[y:y + self.size, x:x + self.size] = prediction
-
         # Overwrite the raster band with the predicted labels
         band = dst_ds.GetRasterBand(1)
-        band.WriteArray(prediction_array)
+        band.WriteArray(predictions)

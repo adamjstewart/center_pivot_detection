@@ -84,38 +84,64 @@ def test(args, model, test_loader, dataset=None, prefix='', vis_file=''):
         acc = []
         if args.cuda:
             model = model.cuda()
-        if vis_file != '':
-            predictions = []
 
-        conf_mat = None
-        for batch_idx, (data, target, y, x) in enumerate(test_loader):
+        # Store predictions in a single array for easier metric calculation
+        prediction_array = np.zeros_like(dataset.segmentation)
+        target_array = dataset.segmentation > 0
+        for data, target, y, x in test_loader:
             if args.cuda:
                 data = data.cuda()
                 target = target.cuda()
-            target = (target > 0).float()
             yhat = model(data)
-            ### Compute
-            batch_conf_mat = metrics.confusion_matrix((target > 0).cpu().int().view(-1).numpy(), (yhat.detach() > 0.5).cpu().int().view(-1).numpy(), labels=[0, 1])
-            if conf_mat is None:
-                conf_mat = batch_conf_mat
-            else:
-                conf_mat += batch_conf_mat
+            prediction_array[y: y + dataset.size, x:x + dataset.size] = \
+                (yhat > 0.5).int().cpu().numpy()
 
+        assert prediction_array.shape == target_array.shape
 
-            if vis_file != '':
-                predictions.extend([((yhat[idx, :, :].detach() > 0.5).cpu().numpy(), y[idx], x[idx]) for idx in range(data.shape[0])])
+        if vis_file != '':
+            assert(dataset is not None)
+            dataset.write(prediction_array, vis_file)
 
+        # Extract subset if only using a portion of the full array
+        if dataset.subset == 'train':
+            # Right quadrants
+            prediction_array = prediction_array[:, prediction_array[1] // 2:]
+            target_array = target_array[:, target[1] // 2:]
+        elif dataset.subset == 'val':
+            # Bottom left quadrant
+            prediction_array = prediction_array[
+                prediction_array[0] // 2:, :prediction_array[1] // 2]
+            target_array = target_array[
+                target_array[0] // 2:, :target_array[1] // 2]
+        elif dataset.subset == 'test':
+            # Top left quadrant
+            prediction_array = prediction_array[
+                :prediction_array[0] // 2, :prediction_array[1] // 2]
+            target_array = target_array[
+                :target_array[0] // 2, :target_array[1] // 2]
+
+        assert prediction_array.shape == target_array.shape
+
+        # Flatten arrays
+        prediction_array = prediction_array.flatten()
+        target_array = target_array.flatten()
+
+        # Compute statistics
+        conf_mat = metrics.confusion_matrix(target_array, prediction_array)
+        acc = metrics.accuracy_score(target_array, prediction_array)
+        prec = metrics.precision_score(target_array, prediction_array)
+        rec = metrics.recall_score(target_array, prediction_array)
+        f1 = metrics.f1_score(target_array, prediction_array)
+        kappa = metrics.cohen_kappa_score(target_array, prediction_array)
+
+        # Print statistics
         print('{} net conf_matrix: \n{}'.format(prefix, conf_mat))
-        acc, prec, rec = (conf_mat[1, 1] + conf_mat[0, 0]) / np.sum(conf_mat), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[0, 1]), conf_mat[1, 1] / (conf_mat[1, 1] + conf_mat[1, 0])
-        f1 = 2 * prec * rec / (prec + rec)
         print('{} net accuracy: {}'.format(prefix, acc))
         print('{} net precision: {}'.format(prefix, prec))
         print('{} net recall: {}'.format(prefix, rec))
         print('{} net f1: {}'.format(prefix, f1))
+        print('{} net kappa: {}'.format(prefix, kappa))
 
-        if vis_file != '':
-            assert(dataset is not None)
-            dataset.write(predictions, vis_file)
 
 ##########
 ### argparse
