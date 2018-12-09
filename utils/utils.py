@@ -21,7 +21,6 @@ def save_checkpoint(args, model):
     del checkpoint
 
 
-
 def binary_splitter(dataset, frac, shuffle=True, batch_size=32, debug=False, num_workers=4, selected_indices=None, confounder_group_size=None):
     dataset_size = len(dataset)
     if debug:

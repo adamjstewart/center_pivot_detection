@@ -59,7 +59,7 @@ class CNNTS3D_add(nn.Module):
         # x : bs * C * T * H * W
         # -> y: N * H * W
         N, C, T, H, W = (x.shape)
-        x = x.contiguous().view(N, C, T, H*W)
+        x = x.view(N, C, T, H*W)
         x = self.temporal_embedder(x)  # N * embedding_size * 1 * HW
         x = x.view(N, self.embedding_size * 3, 1, H, W).view(N, -1, H, W)
         return self.unet_add(x)
@@ -94,7 +94,7 @@ class CNNTS3D_cat(nn.Module):
         # x : bs * C * T * H * W
         # -> y: N * H * W
         N, C, T, H, W = (x.shape)
-        x = x.contiguous().view(N, C, T, H*W)
+        x = x.view(N, C, T, H*W)
         x = self.temporal_embedder(x)  # N * embedding_size * 1 * HW
         x = x.view(N, self.embedding_size * 3, 1, H, W).view(N, -1, H, W)
         return self.unet_cat(x)

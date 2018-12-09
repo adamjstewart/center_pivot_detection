@@ -38,6 +38,7 @@ from scipy import misc
 from sklearn import metrics
 import imageio
 import utils
+from utils import utils as util_functions
 
 # TODO: Write up CNN architecture.
 from modules.smolnet import SmolNet
@@ -213,9 +214,11 @@ for epoch in range(args.n_epochs):
     for bidx, (data, target, y, x) in enumerate(train_loader):
         bs = x.shape[0]
         if args.cuda:
-            data = data.cuda()
-            target = target.cuda()
-
+            data = data.contiguous().cuda()
+            target = target.contiguous().cuda()
+        else:
+            data = data.contiguous()
+            target = target.contiguous()
         target = (target > 0).float()
         pred = model(data)
         batch_acc = ((pred.detach() > 0.5) == (target > 0)).float().mean().item()
@@ -228,14 +231,14 @@ for epoch in range(args.n_epochs):
         adam.zero_grad()
         loss.backward()
         adam.step()
-        del loss
+        del loss, data, target  # BUHBYE
     print("loss[{}]={}".format(epoch, np.mean(losses)))
     print("acc[{}]={}".format(epoch, np.mean(accs)))
     # print("max_acc[{}]={}".format(epoch, np.mean(plusses)))
     if epoch % args.val_rate == 0:
         test(args, model, val_loader, prefix='val ', dataset=val_dataset, vis_file=os.path.join(args.image_dir, 'val_predictions.tif'))
+        util_functions.save_checkpoint(args, model)
 
-utils.save_checkpoint(args, model)
 
 test(args, model, train_loader, prefix='train ', dataset=train_dataset, vis_file=os.path.join(args.image_dir, 'train_predictions.tif'))
 test(args, model, test_loader, prefix='test ', dataset=test_dataset, vis_file=os.path.join(args.image_dir, 'test_predictions.tif'))
