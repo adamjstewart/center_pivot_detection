@@ -4,7 +4,7 @@ import numpy as np
 def xavier_init(fan_in, fan_out):
     high = np.sqrt(6.0/(fan_in+fan_out))
     low = -high
-    return tf.random_uniform((fan_in, fan_out), minval=low, maxval=high, dtype=tf.float64)
+    return tf.random_uniform((fan_in, fan_out), minval=low, maxval=high, dtype=tf.float32)
 
 class Network:
     def __init__(self, X, y):
@@ -17,10 +17,10 @@ class Network:
         self.sess.run(self.init)
         self.train()
     def variables(self):
-        self.x = tf.placeholder(tf.float64, shape=(None, self.train_X.shape[1]))
+        self.x = tf.placeholder(tf.float32, shape=(None, self.train_X.shape[1]))
         self.y = tf.placeholder(tf.bool, shape=(None, self.train_Y.shape[1]))
         self.w = tf.Variable(xavier_init(self.train_X.shape[1],self.train_Y.shape[1]), name="weight")
-        self.b = tf.Variable(tf.zeros([self.train_Y.shape[1]]), dtype = tf.float64)
+        self.b = tf.Variable(tf.zeros([self.train_Y.shape[1]]), dtype = tf.float32)
     def network(self, regParam = 0.1, lrate = 0.001):
         self.output = tf.add(tf.matmul(self.x, self.w),self.b)
         loss = -tf.reduce_sum(self.y * tf.log(1e-6 + self.output) + (1-self.y) * tf.log(1e-6 + 1 - self.output))
