@@ -16,8 +16,8 @@ print("Training Data Loaded")
 # Assuming that the train dataset is given as time, channel, H, W
 thresholds = list(np.linspace(0.5, 0.9, 3))
 data, _, _, _, _ = train_dataset[0]
-data_net_hough = np.zeros((len(train_dataset), data.shape[1], data.shape[2], data.shape[3]))
-data_net_elsd = np.zeros((len(train_dataset), data.shape[1], data.shape[2], data.shape[3]))
+data_net_hough = np.zeros((len(train_dataset), data.shape[1], data.shape[2], data.shape[3]), dtype=np.float32)
+data_net_elsd = np.zeros((len(train_dataset), data.shape[1], data.shape[2], data.shape[3]), dtype=np.float32)
 target_net = np.zeros((len(train_dataset), data.shape[2], data.shape[3]))
 print(len(train_dataset))
 for i in range(len(train_dataset)):
@@ -29,7 +29,7 @@ for i in range(len(train_dataset)):
         # preds_elsd[j,:,:] = (elsd(data[:,j,:,:], thresholds))
     data_net_hough[i,:,:,:] = preds_hough
     # data_net_elsd[i,:,:,:] = preds_elsd
-    target_net[i,:,:] = target
+    target_net[i,:,:][target>0] = 1
     print(i)
 net1 = Network(data_net_hough, target_net) # Training
 net2 = Network(data_net_elsd, target_net)
@@ -47,8 +47,8 @@ print(len(test_dataset))
 accuracies = np.zeros(len(test_dataset))
 for i in range(len(test_dataset)):
     data, target, t, y, x = test_dataset[i]
-    preds_hough = np.zeros((data.shape[1],data.shape[2],data.shape[3]))
-    preds_elsd = np.zeros((data.shape[1],data.shape[2],data.shape[3]))
+    preds_hough = np.zeros((data.shape[1],data.shape[2],data.shape[3]), dtype=np.float32)
+    preds_elsd = np.zeros((data.shape[1],data.shape[2],data.shape[3]), dtype=np.float32)
     for j in range(data.shape[1]):
         preds_hough[j,:,:] = (hough(data[:,j,:,:], thresholds))
         # preds_elsd[j,:,:] = (elsd(data[j,:,:,:], thresholds))
@@ -58,7 +58,7 @@ for i in range(len(test_dataset)):
     accuracies[i] = np.mean(pred_max_elsd==target)
     test_data_net_hough[i,:,:,:] = preds_hough
     test_data_net_elsd[i,:,:,:] = preds_elsd
-    test_target_net[i,:,:] = target
+    test_target_net[i,:,:][target>0] = 1
 print(np.mean(accuracies))
 pred_fnn_hough = Network.score(test_data_net_hough, test_target_net) # Fully Connected Network
 pred_fnn_elsd = Network.score(test_data_net_elsd, test_target_net)

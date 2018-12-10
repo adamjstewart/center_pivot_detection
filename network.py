@@ -18,7 +18,7 @@ class Network:
         self.train()
     def variables(self):
         self.x = tf.placeholder(tf.float32, shape=(None, self.train_X.shape[1]))
-        self.y = tf.placeholder(tf.bool, shape=(None, self.train_Y.shape[1]))
+        self.y = tf.placeholder(tf.int32, shape=(None, self.train_Y.shape[1]))
         self.w = tf.Variable(xavier_init(self.train_X.shape[1],self.train_Y.shape[1]), name="weight")
         self.b = tf.Variable(tf.zeros([self.train_Y.shape[1]]), dtype = tf.float32)
     def network(self, regParam = 0.1, lrate = 0.001):
@@ -30,7 +30,7 @@ class Network:
     def train(self, batch_size=200, epochs=100):
         for j in range(epochs):
             tot_cost = 0
-            for i in range(train_X.size/batch_size):
+            for i in range(int(train_X.size/batch_size)):
                 opt, cost = self.sess.run((self.optimizer, self.cost), feed_dict={self.x: self.train_X[i*batch_size:(i+1)*batch_size,:], self.y: self.train_Y[i*batch_size:(i+1)*batch_size,:]})
                 tot_cost+=cost
             print("Epochs: ",j, "\nTotal Cost: ", tot_cost)
