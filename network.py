@@ -1,5 +1,5 @@
 import tensorflow as tf
-import numpy
+import numpy as np
 
 def xavier_init(fan_in, fan_out):
     high = np.sqrt(6.0/(fan_in+fan_out))
