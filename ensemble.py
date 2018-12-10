@@ -15,13 +15,13 @@ train_dataset = landsat.TimeSeries(subset='train', root=data_folder, pivots=os.p
 print("Training Data Loaded")
 # Assuming that the train dataset is given as time, channel, H, W
 thresholds = list(np.linspace(0.5, 0.9, 3))
-data, _, _, _ = train_dataset[0]
+data, _, _, _, _ = train_dataset[0]
 data_net_hough = np.zeros((len(train_dataset), data.shape[0], data.shape[2], data.shape[3]))
 data_net_elsd = np.zeros((len(train_dataset), data.shape[0], data.shape[2], data.shape[3]))
 target_net = np.zeros((len(train_dataset), data.shape[2], data.shape[3]))
 print(len(train_dataset))
 for i in range(len(train_dataset)):
-    data, target, y, x = train_dataset[i]
+    data, target, t, y, x = train_dataset[i]
     preds_hough = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
     preds_elsd = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
     for j in range(data.shape[1]):
@@ -38,7 +38,7 @@ net2 = Network(data_net_elsd, target_net)
 test_dataset = landsat.TimeSeries(subset='test', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data','pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
 # all_dataset = landsat.TimeSeries(subset='all', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
 print("Data Loaded")
-data, _, _, _ = test_dataset[0]
+data, _, _, _, _ = test_dataset[0]
 test_data_net_hough = np.zeros((len(test_dataset), data.shape[0], data.shape[2], data.shape[3]))
 test_data_net_elsd = np.zeros((len(test_dataset), data.shape[0], data.shape[2], data.shape[3]))
 test_target_net = np.zeros((len(test_dataset), data.shape[2], data.shape[3]))
@@ -46,7 +46,7 @@ test_target_net = np.zeros((len(test_dataset), data.shape[2], data.shape[3]))
 print(len(test_dataset))
 accuracies = np.zeros(len(test_dataset))
 for i in range(len(test_dataset)):
-    data, target, y, x = test_dataset[i]
+    data, target, t, y, x = test_dataset[i]
     preds_hough = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
     preds_elsd = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
     for j in range(data.shape[1]):
