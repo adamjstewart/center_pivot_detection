@@ -22,8 +22,8 @@ target_net = np.zeros((len(train_dataset), data.shape[2], data.shape[3]))
 print(len(train_dataset))
 for i in range(len(train_dataset)):
     data, target, t, y, x = train_dataset[i]
-    preds_hough = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
-    preds_elsd = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
+    preds_hough = np.zeros((data.shape[1],data.shape[2],data.shape[3]))
+    preds_elsd = np.zeros((data.shape[1],data.shape[2],data.shape[3]))
     for j in range(data.shape[1]):
         preds_hough[j,:,:] = (hough(data[:,j,:,:], thresholds))
         # preds_elsd[j,:,:] = (elsd(data[:,j,:,:], thresholds))
@@ -47,8 +47,8 @@ print(len(test_dataset))
 accuracies = np.zeros(len(test_dataset))
 for i in range(len(test_dataset)):
     data, target, t, y, x = test_dataset[i]
-    preds_hough = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
-    preds_elsd = np.zeros((data.shape[0],data.shape[2],data.shape[3]))
+    preds_hough = np.zeros((data.shape[1],data.shape[2],data.shape[3]))
+    preds_elsd = np.zeros((data.shape[1],data.shape[2],data.shape[3]))
     for j in range(data.shape[1]):
         preds_hough[j,:,:] = (hough(data[:,j,:,:], thresholds))
         # preds_elsd[j,:,:] = (elsd(data[j,:,:,:], thresholds))
