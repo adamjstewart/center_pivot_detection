@@ -80,10 +80,10 @@ class UNet_add(nn.Module):
 
 
 class UNet_cat(nn.Module):
-    def __init__(self, args, in_channels=6):
+    def __init__(self, args, in_channels=6, do_sigmoid=True):
         super(UNet_cat, self).__init__()
         self.args = args
-
+        self.do_sigmoid = do_sigmoid
         # c,256x256 -> 256x256
         # Level 0
         self.conv0 = nn.Sequential(
@@ -132,7 +132,10 @@ class UNet_cat(nn.Module):
         y1 = self.deconv1(torch.cat([x2, y1p5], dim=1))
         y0p5 = self.maxunpool0(y1, ind0)
         y0 = self.deconv0(torch.cat([x1, y0p5], dim=1))
-        return torch.sigmoid(y0.view(x.shape[0], x.shape[2], x.shape[3]))
+        if self.do_sigmoid:
+            return torch.sigmoid(y0.view(x.shape[0], x.shape[2], x.shape[3]))
+        else:
+            return y0.view(x.shape[0], x.shape[2], x.shape[3])
 
 
 

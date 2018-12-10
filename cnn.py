@@ -175,13 +175,12 @@ parser.add_argument("--image_dir", dest="image_dir", type=str, default="images",
 parser.add_argument("-chk", "--checkpoint", dest='checkpoint', default='', help="Where to save model to")
 
 # misc
-parser.add_argument("-s", "--split", dest="split", type=float, metavar='<float>', default=0.8, help='Train/test split')  # noqa
 parser.add_argument("--seed", dest="seed", type=int, metavar='<int>', default=1337, help="Random seed (default=1337)")  # noqa
 parser.add_argument("--cuda", dest="cuda", default=False, action="store_true")  # noqa
 parser.add_argument("--debug", default=False, action="store_true", help="Debug mode")
 parser.add_argument("-b", "--batch_size", dest="batch_size", default=32, type=int, help="Batch size")
 parser.add_argument("-v", "--val_rate", dest="val_rate", default=8, type=int, help="Validation rate")
-parser.add_argument("-e", "--epochs", dest="n_epochs", default=1000, type=int, help="Number of epochs")
+parser.add_argument("-e", "--epochs", dest="n_epochs", default=100, type=int, help="Number of epochs")
 parser.add_argument("-lr", "--lr", dest="lr", type=float, metavar='<float>', default=0.001, help='Learning rate')  # noqa
 parser.add_argument("--weight_decay", dest="weight_decay", type=float, metavar='<float>', default=1e-5, help='Weight decay')  # noqa
 parser.add_argument("-a", "--arch", dest="arch", type=str, metavar='<float>', choices=architectures.keys(), default='unet', help='Architecture')  # noqa

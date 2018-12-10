@@ -35,7 +35,7 @@ class UNet_fc_pool(nn.Module):
         super(UNet_fc_pool, self).__init__()
         self.args = args
         self.inC, self.inT = inC, inT
-        self.unet_cat = UNet_cat(args, in_channels=inC)
+        self.unet_cat = UNet_cat(args, in_channels=inC, do_sigmoid=False)
         self.fc_pool = nn.Sequential(
             nn.Linear(inT, 1),
             nn.Sigmoid(),
@@ -52,4 +52,4 @@ class UNet_fc_pool(nn.Module):
         x = self.unet_cat(x).view(N, T, H, W)  # N * T, H, W
         x = x.permute(0, 2, 3, 1).contiguous().view(N * H * W, T)  # N, H, W, T
         x = self.fc_pool(x).view(N * H * W)  # N * H * W
-        return x.view(N, H, W).contiguous()
+        return x.view(N, H, W)
