@@ -33,7 +33,7 @@ class Network:
             for i in range(int(train_X.size/batch_size)):
                 opt, cost = self.sess.run((self.optimizer, self.cost), feed_dict={self.x: self.train_X[i*batch_size:(i+1)*batch_size,:], self.y: self.train_Y[i*batch_size:(i+1)*batch_size,:]})
                 tot_cost+=cost
-            print("Epochs: ",j, "\nTotal Cost: ", tot_cost)
+            print("Epochs: ",j, " Total Cost: ", tot_cost)
         return tot_cost
     def test(self, X):
         return self.sess.run(self.output, feed_dict={self.x: X})
