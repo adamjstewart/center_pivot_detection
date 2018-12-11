@@ -11,11 +11,10 @@ from datasets import landsat
 from network import Network
 from sklearn import metrics
 
-def test(prediction_array, target_array):
+def test(prediction_array, target_array, prefix):
     # Flatten arrays
     prediction_array = prediction_array.flatten()
     target_array = target_array.flatten()
-    prefix = 'test'
 
     # Compute statistics
     conf_mat = metrics.confusion_matrix(target_array, prediction_array)
@@ -80,5 +79,9 @@ for i in range(len(test_dataset)):
     test_data_net[i,:,:,:] = preds
     test_target_net[i,:,:] = target>0
 print(np.mean(accuracies))
-pred_fnn = net1.test(test_data_net) # Fully Connected Network
-test((pred_fnn>0.5),test_target_net)
+pred_fnn = net1.test(data_net) # Fully Connected Network
+train_dataset.write(pred_fnn>0.5, 'train_'+args.model_type+'_predictions.tif')
+test((pred_fnn>0.5),target_net, 'train')
+pred_fnn_test = net1.test(test_data_net) # Fully Connected Network
+test_dataset.write(pred_fnn_test>0.5, 'test_'+args.model_type+'_predictions.tif')
+test((pred_fnn_test>0.5),test_target_net, 'test')
