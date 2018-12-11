@@ -21,16 +21,13 @@ def elsd(data, thresholds, old=True):
     pred = np.zeros(data.shape)
     for cidx in range(data.shape[0]):  # Over channels
         img = np.uint8(data[cidx,:,:])
+        imageio.imwrite("test.pgm", img)
         if(old):
-	        imageio.imwrite("test.pgm", img)
-	        os.system("elsd test.pgm > out.txt")
-	        os.system("inkscape -z -e test.png test.pgm.svg > out.txt")
-        	result = io.imread("test.png", as_gray=True)
-	    else:
-	        imageio.imwrite("test.pgm", img)
-	        os.system("elsdc test.pgm > out.txt")
-	        os.system("inkscape -z -e test.png output.svg > out.txt")
-        	result = io.imread("test.png", as_gray=True)
+            os.system("elsd test.pgm > out.txt")
+        else:
+            os.system("elsdc test.pgm > out.txt")
+        os.system("convert -background transparent test.png test.pgm.svg > out.txt")
+        result = io.imread("test.png", as_gray=True)
         edges = result>0
         hough_res = hough_circle(edges, hough_radii)
         for j in range(len(thresholds)):
