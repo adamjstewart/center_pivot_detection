@@ -14,10 +14,6 @@ ROOT = '/scratch/sciteam/kaiyug/group/stewart1/data/nebraska/Landsat5/2005'
 PIVOTS = os.path.join('/u/sciteam/stewart1/center_pivot_detection/data',
                       'pivots_2005_utm14_{:03d}{:03d}_clipped.tif')
 
-ROOT = '/data/cpd/data/all_data/'
-PIVOTS = os.path.join('/data/cpd/data/u/sciteam/stewart1/center_pivot_detection/data',
-                      'pivots_2005_utm14_{:03d}{:03d}_clipped.tif')
-
 
 class SingleScene(Dataset):
     """This Dataset loads subsets of a single scene."""

@@ -24,6 +24,8 @@ from skimage.feature import canny
 from skimage.draw import circle
 
 from datasets import landsat
+
+
 def hough(data, thld):
     # Returns a TxHxW matrix, where T is number of thresholds and HxW is the image dimension.
     thresholds = thld
@@ -41,6 +43,8 @@ def hough(data, thld):
                 pred[cidx, circx, circy] = thr
     preds = pred.max(axis=0)
     return preds
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--d', dest='data_dir', type=str, default='data_small', help='Data directory.')

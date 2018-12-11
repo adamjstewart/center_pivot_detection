@@ -10,35 +10,33 @@ from elsd import elsd
 from datasets import landsat
 from network import Network
 from sklearn import metrics
-data_folder = 'data'
 
 def test(prediction_array, target_array):
-        # Flatten arrays
-        prediction_array = prediction_array.flatten()
-        target_array = target_array.flatten()
-        prefix = 'test'
+    # Flatten arrays
+    prediction_array = prediction_array.flatten()
+    target_array = target_array.flatten()
+    prefix = 'test'
 
-        # Compute statistics
-        conf_mat = metrics.confusion_matrix(target_array, prediction_array)
-        acc = metrics.accuracy_score(target_array, prediction_array)
-        prec = metrics.precision_score(target_array, prediction_array)
-        rec = metrics.recall_score(target_array, prediction_array)
-        f1 = metrics.f1_score(target_array, prediction_array)
-        kappa = metrics.cohen_kappa_score(target_array, prediction_array)
+    # Compute statistics
+    conf_mat = metrics.confusion_matrix(target_array, prediction_array)
+    acc = metrics.accuracy_score(target_array, prediction_array)
+    prec = metrics.precision_score(target_array, prediction_array)
+    rec = metrics.recall_score(target_array, prediction_array)
+    f1 = metrics.f1_score(target_array, prediction_array)
+    kappa = metrics.cohen_kappa_score(target_array, prediction_array)
 
-        # Print statistics
-        print('{} net conf_matrix: \n{}'.format(prefix, conf_mat))
-        print('{} net accuracy: {}'.format(prefix, acc))
-        print('{} net precision: {}'.format(prefix, prec))
-        print('{} net recall: {}'.format(prefix, rec))
-        print('{} net f1: {}'.format(prefix, f1))
-        print('{} net kappa: {}'.format(prefix, kappa))
+    # Print statistics
+    print('{} net conf_matrix: \n{}'.format(prefix, conf_mat))
+    print('{} net accuracy: {}'.format(prefix, acc))
+    print('{} net precision: {}'.format(prefix, prec))
+    print('{} net recall: {}'.format(prefix, rec))
+    print('{} net f1: {}'.format(prefix, f1))
+    print('{} net kappa: {}'.format(prefix, kappa))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', "--type", dest='model_type', type=str, default='canny', help='CV model to use.')
 args = parser.parse_args()
-train_dataset = landsat.TimeSeries(subset='train', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',
-                      'pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
+train_dataset = landsat.TimeSeries(subset='train')
 print("Training Data Loaded")
 # Assuming that the train dataset is given as channel, time, H, W
 thresholds = list(np.linspace(0.5, 0.9, 3))
@@ -60,7 +58,7 @@ for i in range(len(train_dataset)):
 print("Training Network")
 net1 = Network(data_net, target_net) # Training
 
-test_dataset = landsat.TimeSeries(subset='test', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data','pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
+test_dataset = landsat.TimeSeries(subset='test')
 print("Test Data Loaded")
 data, _, _, _, _ = test_dataset[0]
 test_data_net = np.zeros((len(test_dataset), data.shape[1], data.shape[2], data.shape[3]))
