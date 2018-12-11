@@ -12,7 +12,7 @@ from skimage.draw import circle
 from skimage import io
 
 from datasets import landsat
-def elsd(data, thld):
+def elsd(data, thld, old=True):
     # Returns a TxHxW matrix, where T is number of thresholds and HxW is the image dimension.
     thresholds = thld
     # Hough transforms don't have any trainable parameters. We will simply do a hyperparam search
@@ -20,10 +20,15 @@ def elsd(data, thld):
     pred = np.zeros(data.shape)
     for cidx in range(data.shape[0]):  # Over channels
         img = np.uint8(data[cidx,:,:])
-        imageio.imwrite("./ELSD/test.pgm", img)
-        os.system("./ELSD/elsd ./ELSD/test.pgm > out.txt")
-        os.system("inkscape -z -e ./ELSD/test.png ./ELSD/test.pgm.svg > out.txt")
-        result = io.imread('./ELSD/test.png', as_gray=True)
+        if(old):
+	        imageio.imwrite("./ELSD/test.pgm", img)
+	        os.system("./ELSD/elsd ./ELSD/test.pgm > out.txt")
+	        os.system("inkscape -z -e ./ELSD/test.png ./ELSD/test.pgm.svg > out.txt")
+	    else:
+	        imageio.imwrite("./ELSDc/test.pgm", img)
+	        os.system("./ELSDc/elsdc ./ELSDc/test.pgm > out.txt")
+	        os.system("inkscape -z -e ./ELSDc/test.png ./ELSDc/output.svg > out.txt")
+        result = io.imread('./ELSDc/test.png', as_gray=True)
         edges = result>0
         hough_res = hough_circle(edges, hough_radii)
         for j in range(len(thresholds)):

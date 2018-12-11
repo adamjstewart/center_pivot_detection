@@ -34,4 +34,5 @@ class Network:
             print("Epochs: ",j, " Total Cost: ", tot_cost)
         return tot_cost
     def test(self, X):
-        return self.sess.run(self.output, feed_dict={self.x: np.swapaxes(X,1,3).reshape((X.shape[0]*X.shape[3]*X.shape[2],X.shape[1]))})
+        out = self.sess.run(self.output, feed_dict={self.x: np.swapaxes(X,1,3).reshape((X.shape[0]*X.shape[3]*X.shape[2],X.shape[1]))})
+        return np.swapaxes(out.reshape((X.shape[0],X.shape[2],X.shape[3])), 1, 2)
