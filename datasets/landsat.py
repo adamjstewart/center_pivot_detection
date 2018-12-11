@@ -230,6 +230,7 @@ class TimeSeries(Dataset):
         Returns:
             numpy.ndarray: a 4D tensor of raw satellite imagery
             numpy.ndarray: the correct segmentation of the image
+            int: the time index the subset was extracted from
             int: the starting row the subset was extracted from
             int: the starting col the subset was extracted from
         """
@@ -295,6 +296,7 @@ class TimeSeries(Dataset):
 
         if isinstance(t, slice):
             t = np.zeros_like(y) - 1
+
         return data, target, t, y, x
 
     def write(self, predictions, filename):
@@ -315,8 +317,8 @@ class TimeSeries(Dataset):
             band.WriteArray(predictions)
         else:
             for t in range(predictions.shape[0]):
-                filename = filename.replace('.tif', '_{}.tif'.format(t))
-                dst_ds = driver.CreateCopy(filename, self.dataset)
+                dst_filename = filename.replace('.tif', '_{}.tif'.format(t))
+                dst_ds = driver.CreateCopy(dst_filename, self.dataset)
 
                 # Overwrite the raster band with the predicted labels
                 band = dst_ds.GetRasterBand(1)
