@@ -10,28 +10,27 @@ from skimage.transform import hough_circle, hough_circle_peaks
 from skimage.feature import canny
 from skimage.draw import circle
 from skimage import io
-elsd_folder = "./ELSD"
-elsdc_folder = "./ELSDc"
 
 from datasets import landsat
-def elsd(data, thld, old=True):
+
+
+def elsd(data, thresholds, old=True):
     # Returns a TxHxW matrix, where T is number of thresholds and HxW is the image dimension.
-    thresholds = thld
     # Hough transforms don't have any trainable parameters. We will simply do a hyperparam search
     hough_radii = np.arange(10, 20, 10)
     pred = np.zeros(data.shape)
     for cidx in range(data.shape[0]):  # Over channels
         img = np.uint8(data[cidx,:,:])
         if(old):
-            imageio.imwrite(elsd_folder+"/test.pgm", img)
-            os.system(elsd_folder+"/elsd "+elsd_folder+"/test.pgm > out.txt")
-            os.system("convert -background transparent "+elsd_folder+"/test.pgm.svg "+elsd_folder+"/test.png > out.txt")
-            result = io.imread(elsd_folder+"/test.png", as_gray=True)
-        else:
-            imageio.imwrite(elsdc_folder+"/test.pgm", img)
-            os.system(elsdc_folder+"/elsdc "+elsdc_folder+"/test.pgm > out.txt")
-            os.system("convert -background transparent "+elsdc_folder+"/test.pgm.svg "+elsdc_folder+"/test.png > out.txt")
-            result = io.imread(elsdc_folder+"/test.png", as_gray=True)
+	        imageio.imwrite("test.pgm", img)
+	        os.system("elsd test.pgm > out.txt")
+	        os.system("inkscape -z -e test.png test.pgm.svg > out.txt")
+        	result = io.imread("test.png", as_gray=True)
+	    else:
+	        imageio.imwrite("test.pgm", img)
+	        os.system("elsdc test.pgm > out.txt")
+	        os.system("inkscape -z -e test.png output.svg > out.txt")
+        	result = io.imread("test.png", as_gray=True)
         edges = result>0
         hough_res = hough_circle(edges, hough_radii)
         for j in range(len(thresholds)):
@@ -42,6 +41,8 @@ def elsd(data, thld, old=True):
                 pred[cidx, circx, circy] = thr
     preds = pred.max(axis=0)
     return preds
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--d', dest='data_dir', type=str, default='data_small', help='Data directory.')
