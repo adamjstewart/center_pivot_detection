@@ -10,6 +10,7 @@ from elsd import elsd
 from datasets import landsat
 from network import Network
 from sklearn import metrics
+data_folder = 'data'
 
 def test(prediction_array, target_array):
         # Flatten arrays
@@ -36,8 +37,7 @@ def test(prediction_array, target_array):
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', "--type", dest='model_type', type=str, default='canny', help='CV model to use.')
 args = parser.parse_args()
-data_folder = 'data'
-train_dataset = landsat.TimeSeries(subset='train', length=20, root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',
+train_dataset = landsat.TimeSeries(subset='train', root=data_folder, pivots=os.path.join('data/u/sciteam/stewart1/center_pivot_detection/data',
                       'pivots_2005_utm14_{:03d}{:03d}_clipped.tif'))
 print("Training Data Loaded")
 # Assuming that the train dataset is given as channel, time, H, W

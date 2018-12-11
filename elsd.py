@@ -10,6 +10,8 @@ from skimage.transform import hough_circle, hough_circle_peaks
 from skimage.feature import canny
 from skimage.draw import circle
 from skimage import io
+elsd_folder = "./ELSD"
+elsdc_folder = "./ELSDc"
 
 from datasets import landsat
 def elsd(data, thld, old=True):
@@ -21,14 +23,15 @@ def elsd(data, thld, old=True):
     for cidx in range(data.shape[0]):  # Over channels
         img = np.uint8(data[cidx,:,:])
         if(old):
-	        imageio.imwrite("./ELSD/test.pgm", img)
-	        os.system("./ELSD/elsd ./ELSD/test.pgm > out.txt")
-	        os.system("inkscape -z -e ./ELSD/test.png ./ELSD/test.pgm.svg > out.txt")
+	        imageio.imwrite(elsd_folder+"/test.pgm", img)
+	        os.system(elsd_folder+"/elsd "+elsd_folder+"/test.pgm > out.txt")
+	        os.system("inkscape -z -e "+elsd_folder+"/test.png "+elsd_folder+"/test.pgm.svg > out.txt")
+        	result = io.imread(elsd_folder+"/test.png", as_gray=True)
 	    else:
-	        imageio.imwrite("./ELSDc/test.pgm", img)
-	        os.system("./ELSDc/elsdc ./ELSDc/test.pgm > out.txt")
-	        os.system("inkscape -z -e ./ELSDc/test.png ./ELSDc/output.svg > out.txt")
-        result = io.imread('./ELSDc/test.png', as_gray=True)
+	        imageio.imwrite(elsdc_folder+"/test.pgm", img)
+	        os.system(elsdc_folder+"/elsdc "+elsdc_folder+"/test.pgm > out.txt")
+	        os.system("inkscape -z -e "+elsdc_folder+"/test.png "+elsdc_folder+"/output.svg > out.txt")
+        	result = io.imread(elsdc_folder+"/test.png", as_gray=True)
         edges = result>0
         hough_res = hough_circle(edges, hough_radii)
         for j in range(len(thresholds)):
