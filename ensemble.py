@@ -38,7 +38,7 @@ args = parser.parse_args()
 train_dataset = landsat.TimeSeries(subset='train')
 print("Training Data Loaded")
 # Assuming that the train dataset is given as channel, time, H, W
-thresholds = list(np.linspace(0.5, 0.9, 3))
+thresholds = list(np.linspace(0.1, 0.9, 5))
 data, _, _, _, _ = train_dataset[0]
 data_net = np.zeros((len(train_dataset), data.shape[1], data.shape[2], data.shape[3]), dtype=np.float32)
 target_net = np.zeros((len(train_dataset), data.shape[2], data.shape[3]))
