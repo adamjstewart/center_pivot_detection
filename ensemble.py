@@ -35,7 +35,7 @@ def test(prediction_array, target_array, prefix):
 def join(data, coor, dataset):
 	res = np.zeros_like(dataset.segmentation)
 	for i in range(len(data)):
-		res[coor[i,1]:coor[i,1]+data.shape[1],coor[i,1]:coor[i,1]+data.shape[1]] = data[i,:,:]
+		res[coor[i,1]:coor[i,1]+data.shape[1],coor[i,0]:coor[i,0]+data.shape[2]] = data[i,:,:]
 	return res
 
 parser = argparse.ArgumentParser()
@@ -48,7 +48,7 @@ thresholds = list(np.linspace(0.1, 0.9, 5))
 data, _, _, _, _ = train_dataset[0]
 data_net = np.zeros((len(train_dataset), data.shape[1], data.shape[2], data.shape[3]), dtype=np.float32)
 target_net = np.zeros((len(train_dataset), data.shape[2], data.shape[3]))
-coordinates = np.zeros((len(train_dataset), 2))
+coordinates = np.zeros((len(train_dataset), 2), dtype=np.int64)
 for i in range(2):#range(len(train_dataset)):
     data, target, t, y, x = train_dataset[i]
     coordinates[i,:] = np.array([x,y])
@@ -72,7 +72,7 @@ test_data_net = np.zeros((len(test_dataset), data.shape[1], data.shape[2], data.
 test_target_net = np.zeros((len(test_dataset), data.shape[2], data.shape[3]))
 
 accuracies = np.zeros(len(test_dataset))
-test_coordinates = np.zeros((len(test_dataset), 2))
+test_coordinates = np.zeros((len(test_dataset), 2), dtype=np.int64)
 for i in range(2):#range(len(test_dataset)):
     data, target, t, y, x = test_dataset[i]
     test_coordinates[i,:] = np.array([x,y])
