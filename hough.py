@@ -27,16 +27,19 @@ from datasets import landsat
 
 
 def hough(data, thld):
+    print('Performing Hough transform...')
     # Returns a TxHxW matrix, where T is number of thresholds and HxW is the image dimension.
     thresholds = thld
     # Hough transforms don't have any trainable parameters. We will simply do a hyperparam search
     hough_radii = np.arange(10, 20, 10)
     pred = np.zeros(data.shape)
     for cidx in range(data.shape[0]):  # Over channels
+        print('Channel:', cidx)
         edges = canny(data[cidx, :, :])
         hough_res = hough_circle(edges, hough_radii)
         for j in range(len(thresholds)):
             thr = thresholds[j]
+            print('Threshold:', thr)
             accums, cxs, cys, radii = hough_circle_peaks(hough_res, hough_radii, threshold=thr)
             for cx, cy, r in zip(cxs, cys, radii):
                 circx, circy = circle(cx, cy, r, shape=(pred.shape[0], pred.shape[1]))
