@@ -32,6 +32,15 @@ def test(prediction_array, target_array, prefix):
     print('{} net f1: {}'.format(prefix, f1))
     print('{} net kappa: {}'.format(prefix, kappa))
 
+def join(data, coor):
+	H = np.max(coor[:,0])+data.shape[2]
+	W = np.max(coor[:,1])+data.shape[1]
+	print(W,H)
+	res = np.zeros((W,H))
+	for i in range(len(data)):
+		res[coor[i,1]:coor[i,1]+data.shape[1],coor[i,1]:coor[i,1]+data.shape[1]] = data[i,:,:]
+	return res
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', "--type", dest='model_type', type=str, default='canny', help='CV model to use.')
 args = parser.parse_args()
@@ -42,8 +51,10 @@ thresholds = list(np.linspace(0.1, 0.9, 5))
 data, _, _, _, _ = train_dataset[0]
 data_net = np.zeros((len(train_dataset), data.shape[1], data.shape[2], data.shape[3]), dtype=np.float32)
 target_net = np.zeros((len(train_dataset), data.shape[2], data.shape[3]))
-for i in range(len(train_dataset)):
+coordinates = np.zeros((len(train_dataset, 2)))
+for i in range(2):#range(len(train_dataset)):
     data, target, t, y, x = train_dataset[i]
+    coordinates[i,:] = np.array([x,y])
     preds = np.zeros((data.shape[1],data.shape[2],data.shape[3]))
     for j in range(data.shape[1]):
         if(args.model_type=='canny'):
@@ -64,8 +75,10 @@ test_data_net = np.zeros((len(test_dataset), data.shape[1], data.shape[2], data.
 test_target_net = np.zeros((len(test_dataset), data.shape[2], data.shape[3]))
 
 accuracies = np.zeros(len(test_dataset))
-for i in range(len(test_dataset)):
+test_coordinates = np.zeros((len(test_dataset, 2)))
+for i in range(2):#range(len(test_dataset)):
     data, target, t, y, x = test_dataset[i]
+    test_coordinates[i,:] = np.array([x,y])
     preds = np.zeros((data.shape[1],data.shape[2],data.shape[3]), dtype=np.float32)
     for j in range(data.shape[1]):
         if(args.model_type=='canny'):
@@ -80,8 +93,12 @@ for i in range(len(test_dataset)):
     test_target_net[i,:,:] = target>0
 print(np.mean(accuracies))
 pred_fnn = net1.test(data_net) # Fully Connected Network
-train_dataset.write(pred_fnn>0.5, 'train_'+args.model_type+'_predictions.tif')
-test((pred_fnn>0.5),target_net, 'train')
+pred_fnn_join = join(pred_fnn, coordinates)
+target_net_join = join(target_net, coordinates)
+train_dataset.write(pred_fnn_join>0.5, 'train_'+args.model_type+'_predictions.tif')
+test((pred_fnn_join>0.5),target_net_join, 'train')
 pred_fnn_test = net1.test(test_data_net) # Fully Connected Network
-test_dataset.write(pred_fnn_test>0.5, 'test_'+args.model_type+'_predictions.tif')
-test((pred_fnn_test>0.5),test_target_net, 'test')
+pred_fnn_test_join = join(pred_fnn_test, test_coordinates)
+test_target_net_join = join(test_target_net, test_coordinates)
+test_dataset.write(pred_fnn_test_join>0.5, 'test_'+args.model_type+'_predictions.tif')
+test((pred_fnn_test_join>0.5),test_target_net_join, 'test')
