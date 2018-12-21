@@ -61,7 +61,7 @@ for i in range(len(train_dataset)):
         if(args.model_type=='elsdc'):
             preds[j,:,:] = (elsd(data[:,j,:,:], thresholds, old=False))
     data_net[i,:,:,:] = preds
-    target_net[i,:,:][target>0] = 1
+    target_net[i,:,:][target] = 1
 print("Training Network")
 net1 = Network(data_net, target_net) # Training
 
@@ -85,9 +85,9 @@ for i in range(len(test_dataset)):
         if(args.model_type=='elsdc'):
             preds[j,:,:] = (elsd(data[:,j,:,:], thresholds, old=False))
     pred_max = preds.max(axis=0) # Max pooling
-    accuracies[i] = np.mean(pred_max==(target>0))
+    accuracies[i] = np.mean(pred_max==target)
     test_data_net[i,:,:,:] = preds
-    test_target_net[i,:,:] = target>0
+    test_target_net[i,:,:] = target
 print(np.mean(accuracies))
 pred_fnn = net1.test(data_net) # Fully Connected Network
 pred_fnn_join = join(pred_fnn, coordinates, train_dataset)

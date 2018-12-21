@@ -101,11 +101,11 @@ def test(args, model, test_loader, dataset, prefix='', vis_file=''):
         # Store predictions in a single array for easier metric calculation
         if dataset.time:
             prediction_array = np.zeros_like(dataset.segmentation)
-            target_array = dataset.segmentation > 0
+            target_array = dataset.segmentation
         else:
             timesteps = dataset.data.shape[1]
             prediction_array = np.zeros((timesteps, *(list(dataset.segmentation.shape))), dtype=dataset.segmentation.dtype)
-            target_array = np.tile(dataset.segmentation > 0, (timesteps, *([1] * dataset.segmentation.ndim)))
+            target_array = np.tile(dataset.segmentation, (timesteps, *([1] * dataset.segmentation.ndim)))
 
         for data, target, t, y, x in test_loader:
             if args.cuda:
@@ -196,13 +196,13 @@ torch.cuda.manual_seed_all(args.seed)
 args.base_output = os.path.join(args.data_dir, args.base_output)
 os.makedirs(args.base_output, exist_ok=True)
 if len(args.run_code) == 0:
-    # Generate a run code by counting number of directories in oututs
+    # Generate a run code by counting number of directories in outputs
     run_count = len(os.listdir(args.base_output))
     args.run_code = 'run{}'.format(run_count)
 print("Using run_code: {}".format(args.run_code))
 # If directory doesn't exist, create it
-args.model_dir = os.path.join(args.base_output, args.run_code, args.model_dir)  # noqa
-args.image_dir = os.path.join(args.base_output, args.run_code)  # noqa
+args.model_dir = os.path.join(args.base_output, args.run_code, args.model_dir)
+args.image_dir = os.path.join(args.base_output, args.run_code)
 
 directories_needed = [args.model_dir, args.image_dir]
 
@@ -255,7 +255,7 @@ print('Loading all dataset...')
 all_dataset = TimeSeries(subset='all', transform=transform, time=is_time_series_model)
 print('Datasets loaded.')
 
-num_workers = min(multiprocessing.cpu_count() // 4, args.batch_size)
+num_workers = min(multiprocessing.cpu_count(), args.batch_size)
 
 train_loader = DataLoader(train_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
 val_loader = DataLoader(val_dataset, args.batch_size, shuffle=True, num_workers=num_workers)
@@ -287,7 +287,7 @@ for epoch in range(args.n_epochs):
         else:
             data = data
             target = target
-        target = (target > 0).float()
+        target = target.float()
         pred = model(data)
         batch_acc = ((pred.detach() > 0.5) == (target > 0)).float().mean().item()
 

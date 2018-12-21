@@ -59,7 +59,6 @@ if __name__ == "__main__":
     accuracies = np.zeros((len(dataset), len(thresholds)))
     for i in range(len(dataset)):
         data, target, y, x = dataset[i]
-        target = target>0
         pred = hough(data, thresholds)
         for j in range(len(thresholds)):
             accuracies[i,j] = (np.mean((pred>thresholds[j])==target))
